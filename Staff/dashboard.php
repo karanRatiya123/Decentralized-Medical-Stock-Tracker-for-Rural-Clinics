@@ -8,50 +8,103 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
     exit();
 }
 
+// Extract session variables
+$phc_id     = (int)($_SESSION['phc_id'] ?? 0);
+$staff_id   = (int)($_SESSION['staff_id'] ?? 0);
+$staff_name = htmlspecialchars($_SESSION['staff_name'] ?? 'Staff Member');
+$phc_name   = htmlspecialchars($_SESSION['phc_name'] ?? 'PHC Center');
+$taluka     = htmlspecialchars($_SESSION['taluka'] ?? '');
+$district   = htmlspecialchars($_SESSION['district'] ?? '');
 
+// =========================================================================
+// 1. QUERY DASHBOARD METRICS
+// =========================================================================
 
-// Fetch staff details from session
-$phc_id     = $_SESSION['phc_id'];
-$staff_id   = $_SESSION['staff_id'];
-$staff_name = $_SESSION['staff_name'];
-$phc_id     = $_SESSION['phc_id'];
-$phc_name   = $_SESSION['phc_name'] ?? '';
-$taluka     = $_SESSION['taluka'] ?? '';
-$district   = $_SESSION['district'] ?? '';
-
-
-// Fetch dashboard metrics
-// 1. Patients Today
-$stmt_patients=$conn->prepare("
+// Metric 1: Patients visited today
+$stmt_patients = $conn->prepare("
     SELECT COUNT(DISTINCT patient_id) AS cnt 
     FROM patient_visits 
     WHERE phc_id = ? AND DATE(visit_timestamp) = CURDATE()
 ");
 $stmt_patients->bind_param("i", $phc_id);
 $stmt_patients->execute();
-$result_patients = $stmt_patients->get_result();
-$patients_today = $result_patients->fetch_assoc()['cnt'] ?? 0;
+$patients_today = $stmt_patients->get_result()->fetch_assoc()['cnt'] ?? 0;
+$stmt_patients->close();
 
-// 2.Toal medicines issued today0
-$stmt_meds_issued=$conn->prepare("
+// Metric 2: Total medicine units issued today
+$stmt_meds = $conn->prepare("
     SELECT COALESCE(SUM(vm.quantity_issued), 0) AS cnt 
     FROM visit_medicines vm 
     JOIN patient_visits pv ON vm.visit_id = pv.visit_id 
     WHERE pv.phc_id = ? AND DATE(pv.visit_timestamp) = CURDATE()
 ");
-$stmt_meds_issued->bind_param("i", $phc_id);
-$stmt_meds_issued->execute();
-$result_meds_issued = $stmt_meds_issued->get_result();
-$meds_issued_today = $result_meds_issued->fetch_assoc()['cnt'] ?? 0;
- // 3. Total medicines in inventory
- $stmt_toatl=$conn->prepare("SELECT COUNT(*) AS cnt  FROM inventory  WHERE phc_id = ? AND quantity > 0");
-$stmt_toatl->bind_param("i", $phc_id);
-$stmt_toatl->execute();
-$result_toatl = $stmt_toatl->get_result();
-$total_meds = $result_toatl->fetch_assoc()['cnt'] ?? 0;
+$stmt_meds->bind_param("i", $phc_id);
+$stmt_meds->execute();
+$meds_issued_today = $stmt_meds->get_result()->fetch_assoc()['cnt'] ?? 0;
+$stmt_meds->close();
 
+// Metric 3: Total active medicines in PHC inventory
+$stmt_total = $conn->prepare("
+    SELECT COUNT(*) AS cnt 
+    FROM inventory 
+    WHERE phc_id = ? AND quantity > 0
+");
+$stmt_total->bind_param("i", $phc_id);
+$stmt_total->execute();
+$total_medicines = $stmt_total->get_result()->fetch_assoc()['cnt'] ?? 0;
+$stmt_total->close();
 
+// Metric 4: Low stock count (Quantity <= 20)
+$stmt_low = $conn->prepare("
+    SELECT COUNT(*) AS cnt 
+    FROM inventory 
+    WHERE phc_id = ? AND quantity <= 20
+");
+$stmt_low->bind_param("i", $phc_id);
+$stmt_low->execute();
+$low_stock_count = $stmt_low->get_result()->fetch_assoc()['cnt'] ?? 0;
+$stmt_low->close();
 
+// Metric 5: Near expiry count (Expiring in the next 60 days)
+$stmt_exp = $conn->prepare("
+    SELECT COUNT(*) AS cnt 
+    FROM stock_in 
+    WHERE phc_id = ? AND expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 60 DAY)
+");
+$stmt_exp->bind_param("i", $phc_id);
+$stmt_exp->execute();
+$near_expiry_count = $stmt_exp->get_result()->fetch_assoc()['cnt'] ?? 0;
+$stmt_exp->close();
+
+// =========================================================================
+// 2. QUERY ACTIVE LOW-STOCK ALERTS (Top 5)
+// =========================================================================
+$stmt_alerts = $conn->prepare("
+    SELECT m.medicine_name, i.quantity 
+    FROM inventory i 
+    JOIN medicines m ON i.medicine_id = m.medicine_id 
+    WHERE i.phc_id = ? AND i.quantity <= 20 
+    ORDER BY i.quantity ASC 
+    LIMIT 5
+");
+$stmt_alerts->bind_param("i", $phc_id);
+$stmt_alerts->execute();
+$alerts_result = $stmt_alerts->get_result();
+
+// =========================================================================
+// 3. QUERY RECENT PATIENT VISITS (Top 5)
+// =========================================================================
+$stmt_visits = $conn->prepare("
+    SELECT pv.visit_id, pv.visit_timestamp, pt.patient_id, pt.patient_name, pt.age, pt.gender, pt.mobile_no 
+    FROM patient_visits pv 
+    JOIN patients pt ON pv.patient_id = pt.patient_id 
+    WHERE pv.phc_id = ? 
+    ORDER BY pv.visit_timestamp DESC 
+    LIMIT 5
+");
+$stmt_visits->bind_param("i", $phc_id);
+$stmt_visits->execute();
+$recent_visits = $stmt_visits->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -78,61 +131,61 @@ $total_meds = $result_toatl->fetch_assoc()['cnt'] ?? 0;
         </div>
         
         <ul class="nav-links">
-    <li>
-        <a href="dashboard.php">
-            <i class="fas fa-th-large"></i>
-            <span>Dashboard</span>
-        </a>
-    </li>
-    <li>
-        <a href="patients.php">
-            <i class="fas fa-users"></i>
-            <span>Patients</span>
-        </a>
-    </li>
-    <li>
-        <a href="medicine_issue.php">
-            <i class="fas fa-pills"></i>
-            <span>Medicine Issue</span>
-        </a>
-    </li>
-    <li>
-        <a href="inventory.php">
-            <i class="fas fa-warehouse"></i>
-            <span>Inventory</span>
-        </a>
-    </li>
-    <li>
-        <a href="stock_in.php">
-            <i class="fas fa-arrow-down"></i>
-            <span>Stock Received</span>
-        </a>
-    </li>
-    <li>
-        <a href="medicine_requests.php">
-            <i class="fas fa-file-invoice"></i>
-            <span>Medicine Requests</span>
-        </a>
-    </li>
-    <li>
-        <a href="doctors.php">
-            <i class="fas fa-user-md"></i>
-            <span>Doctors</span>
-        </a>
-    </li>
-    <li>
-        <a href="reports.php">
-            <i class="fas fa-chart-line"></i>
-            <span>Reports</span>
-        </a>
-    </li>
-    <li>
-        <a href="profile.php">
-            <i class="fas fa-user-circle"></i>
-            <span>Profile</span>
-        </a>
-    </li>
-</ul>
+            <li class="active">
+                <a href="dashboard.php">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="patients.php">
+                    <i class="fas fa-users"></i>
+                    <span>Patients</span>
+                </a>
+            </li>
+            <li>
+                <a href="medicine_issue.php">
+                    <i class="fas fa-pills"></i>
+                    <span>Medicine Issue</span>
+                </a>
+            </li>
+            <li>
+                <a href="inventory.php">
+                    <i class="fas fa-warehouse"></i>
+                    <span>Inventory</span>
+                </a>
+            </li>
+            <li>
+                <a href="stock_in.php">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>Stock Received</span>
+                </a>
+            </li>
+            <li>
+                <a href="medicine_requests.php">
+                    <i class="fas fa-file-invoice"></i>
+                    <span>Medicine Requests</span>
+                </a>
+            </li>
+            <li>
+                <a href="doctors.php">
+                    <i class="fas fa-user-md"></i>
+                    <span>Doctors</span>
+                </a>
+            </li>
+            <li>
+                <a href="reports.php">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="profile.php">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Profile</span>
+                </a>
+            </li>
+        </ul>
 
         <div class="sidebar-footer">
             <div class="user-card-small">
@@ -278,17 +331,20 @@ $total_meds = $result_toatl->fetch_assoc()['cnt'] ?? 0;
                         <a href="inventory.php?filter=alerts" class="view-all">View All</a>
                     </div>
                     
-                    <!-- Dynamic Alerts will populate here -->
-                    <!--
-                    <div class="alert-item low-stock">
-                        <i class="fas fa-exclamation-circle alert-icon"></i>
-                        <div class="alert-details">
-                            <h4>Paracetamol 500mg</h4>
-                            <p>Only 8 Tablets Left (Min: 30)</p>
-                        </div>
-                        <button class="btn-action btn-restock">Restock</button>
-                    </div>
-                    -->
+                    <?php if ($alerts_result && $alerts_result->num_rows > 0): ?>
+                        <?php while ($alert = $alerts_result->fetch_assoc()): ?>
+                            <div class="alert-item low-stock">
+                                <i class="fas fa-exclamation-circle alert-icon"></i>
+                                <div class="alert-details">
+                                    <h4><?php echo htmlspecialchars($alert['medicine_name']); ?></h4>
+                                    <p>Only <?php echo (int)$alert['quantity']; ?> Units Left (Threshold: 20)</p>
+                                </div>
+                                <a href="medicine_requests.php?action=create" class="btn-action btn-restock" style="text-decoration:none; text-align:center;">Restock</a>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p style="color: var(--text-secondary); font-size: 13px; padding: 15px;">No low stock alerts for this PHC.</p>
+                    <?php endif; ?>
                 </div>
 
                 <!-- RECENT PATIENTS TABLE -->
@@ -300,24 +356,29 @@ $total_meds = $result_toatl->fetch_assoc()['cnt'] ?? 0;
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Patient ID</th>
                                 <th>Patient Name</th>
                                 <th>Age/Sex</th>
                                 <th>Mobile</th>
-                                <th>Last Visit</th>
+                                <th>Visit Date/Time</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Dynamic patient visit rows will load here -->
-                            <!--
-                            <tr>
-                                <td>P1258</td>
-                                <td>Ramesh Bhai</td>
-                                <td>45 / M</td>
-                                <td>9876543210</td>
-                                <td>10:30 AM</td>
-                            </tr>
-                            -->
+                            <?php if ($recent_visits && $recent_visits->num_rows > 0): ?>
+                                <?php while ($visit = $recent_visits->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><strong>P-<?php echo str_pad($visit['patient_id'], 4, '0', STR_PAD_LEFT); ?></strong></td>
+                                        <td><?php echo htmlspecialchars($visit['patient_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($visit['age'] ?? '-'); ?> / <?php echo htmlspecialchars(substr($visit['gender'] ?? '-', 0, 1)); ?></td>
+                                        <td><?php echo htmlspecialchars($visit['mobile_no'] ?? '-'); ?></td>
+                                        <td><?php echo date("d M, h:i A", strtotime($visit['visit_timestamp'])); ?></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-secondary);">No recent patient visits recorded.</td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -339,3 +400,7 @@ $total_meds = $result_toatl->fetch_assoc()['cnt'] ?? 0;
 
 </body>
 </html>
+<?php
+$stmt_alerts->close();
+$stmt_visits->close();
+?>

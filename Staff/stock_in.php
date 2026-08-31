@@ -1,10 +1,106 @@
 <?php
 session_start();
+require_once '../config/database.php';
 
-$phc_name = $phc_name ?? '';
-$taluka = $taluka ?? '';
-$district = $district ?? '';
-$staff_name = $staff_name ?? '';
+// Session verification (Staff Only)
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'staff') {
+    header("Location: ../login.php");
+    exit();
+}
+
+$phc_id     = (int)($_SESSION['phc_id'] ?? 0);
+$staff_id   = (int)($_SESSION['staff_id'] ?? 0);
+$staff_name = htmlspecialchars($_SESSION['staff_name'] ?? 'Staff Member');
+$phc_name   = htmlspecialchars($_SESSION['phc_name'] ?? 'PHC Center');
+$taluka     = htmlspecialchars($_SESSION['taluka'] ?? '');
+$district   = htmlspecialchars($_SESSION['district'] ?? '');
+
+$success_msg = '';
+$error_msg   = '';
+
+// =========================================================================
+// 1. HANDLE RECEIVE STOCK FORM SUBMISSION (POST)
+// =========================================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'receive_stock') {
+    $medicine_id       = (int)($_POST['medicine_id'] ?? 0);
+    $quantity_received = (int)($_POST['quantity'] ?? 0);
+    $expiry_date       = trim($_POST['expiry_date'] ?? '');
+
+    if ($medicine_id > 0 && $quantity_received > 0 && !empty($expiry_date)) {
+        $conn->begin_transaction();
+
+        try {
+            // Step 1: Insert into stock_in table
+            $stmt_stock = $conn->prepare("
+                INSERT INTO stock_in (medicine_id, phc_id, quantity_received, expiry_date, received_date, staff_id)
+                VALUES (?, ?, ?, ?, NOW(), ?)
+            ");
+            $stmt_stock->bind_param("iiisi", $medicine_id, $phc_id, $quantity_received, $expiry_date, $staff_id);
+            $stmt_stock->execute();
+            $shipment_id = $stmt_stock->insert_id;
+            $stmt_stock->close();
+
+            // Step 2: Insert or Update Inventory Quantity
+            $stmt_inv = $conn->prepare("
+                INSERT INTO inventory (phc_id, medicine_id, quantity, last_updated)
+                VALUES (?, ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity), last_updated = NOW()
+            ");
+            $stmt_inv->bind_param("iii", $phc_id, $medicine_id, $quantity_received);
+            $stmt_inv->execute();
+            $stmt_inv->close();
+
+            $conn->commit();
+            $success_msg = "New stock received successfully! Shipment ID: #SHP-" . str_pad($shipment_id, 4, '0', STR_PAD_LEFT) . " (+" . $quantity_received . " units added to inventory).";
+
+        } catch (Exception $e) {
+            $conn->rollback();
+            $error_msg = "Error processing shipment: " . $e->getMessage();
+        }
+    } else {
+        $error_msg = "Please choose a medicine, enter a valid quantity, and specify the batch expiry date.";
+    }
+}
+
+// =========================================================================
+// 2. FETCH MASTER MEDICINES FOR MODAL DROPDOWN
+// =========================================================================
+$medicines_list = $conn->query("SELECT medicine_id, medicine_name, category, pack_quantity FROM medicines ORDER BY medicine_name ASC");
+
+// =========================================================================
+// 3. FETCH SHIPMENT HISTORY LOGS
+// =========================================================================
+$search = trim($_GET['search'] ?? '');
+
+if (!empty($search)) {
+    $search_param = "%" . $search . "%";
+    $stmt_history = $conn->prepare("
+        SELECT s.stockin_id, s.quantity_received, s.expiry_date, s.received_date,
+               m.medicine_name, m.category,
+               st.staff_name
+        FROM stock_in s
+        JOIN medicines m ON s.medicine_id = m.medicine_id
+        LEFT JOIN staff st ON s.staff_id = st.staff_id
+        WHERE s.phc_id = ? AND (m.medicine_name LIKE ? OR s.stockin_id LIKE ?)
+        ORDER BY s.received_date DESC
+    ");
+    $stmt_history->bind_param("iss", $phc_id, $search_param, $search);
+} else {
+    $stmt_history = $conn->prepare("
+        SELECT s.stockin_id, s.quantity_received, s.expiry_date, s.received_date,
+               m.medicine_name, m.category,
+               st.staff_name
+        FROM stock_in s
+        JOIN medicines m ON s.medicine_id = m.medicine_id
+        LEFT JOIN staff st ON s.staff_id = st.staff_id
+        WHERE s.phc_id = ?
+        ORDER BY s.received_date DESC
+    ");
+    $stmt_history->bind_param("i", $phc_id);
+}
+
+$stmt_history->execute();
+$shipments_result = $stmt_history->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -32,76 +128,26 @@ $staff_name = $staff_name ?? '';
         </div>
         
         <ul class="nav-links">
-    <li>
-        <a href="dashboard.php">
-            <i class="fas fa-th-large"></i>
-            <span>Dashboard</span>
-        </a>
-    </li>
-    <li>
-        <a href="patients.php">
-            <i class="fas fa-users"></i>
-            <span>Patients</span>
-        </a>
-    </li>
-    <li>
-        <a href="medicine_issue.php">
-            <i class="fas fa-pills"></i>
-            <span>Medicine Issue</span>
-        </a>
-    </li>
-    <li>
-        <a href="inventory.php">
-            <i class="fas fa-warehouse"></i>
-            <span>Inventory</span>
-        </a>
-    </li>
-    <li>
-        <a href="stock_in.php">
-            <i class="fas fa-arrow-down"></i>
-            <span>Stock Received</span>
-        </a>
-    </li>
-    <li>
-        <a href="medicine_requests.php">
-            <i class="fas fa-file-invoice"></i>
-            <span>Medicine Requests</span>
-        </a>
-    </li>
-    <li>
-        <a href="doctors.php">
-            <i class="fas fa-user-md"></i>
-            <span>Doctors</span>
-        </a>
-    </li>
-    <li>
-        <a href="reports.php">
-            <i class="fas fa-chart-line"></i>
-            <span>Reports</span>
-        </a>
-    </li>
-    <li>
-        <a href="profile.php">
-            <i class="fas fa-user-circle"></i>
-            <span>Profile</span>
-        </a>
-    </li>
-</ul>
+            <li><a href="dashboard.php"><i class="fas fa-th-large"></i><span>Dashboard</span></a></li>
+            <li><a href="patients.php"><i class="fas fa-users"></i><span>Patients</span></a></li>
+            <li><a href="medicine_issue.php"><i class="fas fa-pills"></i><span>Medicine Issue</span></a></li>
+            <li><a href="inventory.php"><i class="fas fa-warehouse"></i><span>Inventory</span></a></li>
+            <li class="active"><a href="stock_in.php"><i class="fas fa-arrow-down"></i><span>Stock Received</span></a></li>
+            <li><a href="medicine_requests.php"><i class="fas fa-file-invoice"></i><span>Medicine Requests</span></a></li>
+            <li><a href="doctors.php"><i class="fas fa-user-md"></i><span>Doctors</span></a></li>
+            <li><a href="reports.php"><i class="fas fa-chart-line"></i><span>Reports</span></a></li>
+            <li><a href="profile.php"><i class="fas fa-user-circle"></i><span>Profile</span></a></li>
+        </ul>
 
         <div class="sidebar-footer">
             <div class="user-card-small">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
+                <div class="user-avatar"><i class="fas fa-user"></i></div>
                 <div class="user-details">
                     <h4><?php echo $staff_name; ?></h4>
                     <p>Role: PHC Staff</p>
                 </div>
             </div>
-            <a href="../login.php" class="btn-logout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
+            <a href="../login.php" class="btn-logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
         </div>
     </nav>
 
@@ -110,20 +156,13 @@ $staff_name = $staff_name ?? '';
          ============================== -->
     <main class="main-content">
         
-        <!-- TOP HEADER BAR -->
         <header class="top-header">
             <div class="header-left">
                 <h2>Stock Received (Stock In)</h2>
-                <p><?php echo $phc_name; ?> - Log Incoming Shipments & Expiry Dates</p>
+                <p><?php echo $phc_name; ?> - Log Incoming Shipments & Batch Expiry Dates</p>
             </div>
             <div class="header-right">
-                <div class="search-bar-container">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search Shipments...">
-                </div>
-                <button class="theme-toggle-btn" id="themeToggleBtn" title="Switch Theme">
-                    <i class="fas fa-sun"></i>
-                </button>
+                <button class="theme-toggle-btn" id="themeToggleBtn" title="Switch Theme"><i class="fas fa-sun"></i></button>
                 <div class="date-time-display">
                     <i class="far fa-calendar-alt"></i>
                     <span><?php echo date("d M Y, h:i A"); ?></span>
@@ -131,28 +170,46 @@ $staff_name = $staff_name ?? '';
             </div>
         </header>
 
-        <!-- PAGE CONTENT CONTAINER -->
         <div class="dashboard-container">
 
-            <!-- SUCCESS NOTIFICATION BANNER -->
-            <div class="alert-banner success-banner" id="stockSuccessBanner" style="display: none;">
-                <i class="fas fa-check-circle"></i>
-                <span>New stock received successfully! Inventory quantity updated.</span>
-            </div>
-
-            <!-- ACTION BAR: Search & Receive Stock Button -->
-            <div class="page-action-bar">
-                <div class="search-box">
-                    <input type="text" id="stockSearchInput" placeholder="Search by Medicine Name or Shipment ID...">
+            <!-- NOTIFICATION BANNERS -->
+            <?php if (!empty($success_msg)): ?>
+                <div class="alert-banner success-banner" style="display: flex; background: rgba(16,185,129,0.15); border: 1px solid #10b981; color: #10b981; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;">
+                    <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+                    <span><?php echo $success_msg; ?></span>
                 </div>
-                <button class="btn-primary-action" id="openStockModalBtn">
+            <?php endif; ?>
+
+            <?php if (!empty($error_msg)): ?>
+                <div class="alert-banner error-banner" style="display: flex; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #ef4444; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px;">
+                    <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
+                    <span><?php echo $error_msg; ?></span>
+                </div>
+            <?php endif; ?>
+
+            <!-- ACTION BAR -->
+            <div class="page-action-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;">
+                <form action="stock_in.php" method="GET" style="display: flex; gap: 10px; flex: 1; max-width: 450px;">
+                    <div class="search-box" style="flex: 1;">
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search by Medicine Name or Shipment ID..." style="width: 100%; padding: 10px 14px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; font-size: 13px;">
+                    </div>
+                    <button type="submit" class="btn-primary-action" style="padding: 10px 18px; border: none; background: var(--accent-color, #0ea5e9); color: #fff; border-radius: 6px; cursor: pointer;">Search</button>
+                    <?php if (!empty($search)): ?>
+                        <a href="stock_in.php" style="padding: 10px 14px; background: var(--bg-card, #1e293b); border: 1px solid var(--border-color); color: var(--text-secondary); border-radius: 6px; text-decoration: none; font-size: 13px;">Clear</a>
+                    <?php endif; ?>
+                </form>
+
+                <!-- 100% Unbreakable Inline Trigger Button -->
+                <button type="button" class="btn-primary-action" id="openStockModalBtn" 
+                    onclick="document.getElementById('stockModal').style.cssText = 'display: flex !important; opacity: 1 !important; visibility: visible !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0,0,0,0.8) !important; z-index: 999999 !important; justify-content: center !important; align-items: center !important;'"
+                    style="padding: 10px 18px; border: none; background: #10b981; color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                     <i class="fas fa-box-open"></i> Receive New Stock
                 </button>
             </div>
 
-            <!-- STOCK-IN HISTORY TABLE -->
+            <!-- SHIPMENTS HISTORY TABLE -->
             <div class="data-panel">
-                <div class="panel-header">
+                <div class="panel-header" style="margin-bottom: 15px;">
                     <h3 class="section-title">Incoming Shipment Logs</h3>
                 </div>
                 <table class="data-table">
@@ -160,6 +217,7 @@ $staff_name = $staff_name ?? '';
                         <tr>
                             <th>Shipment ID</th>
                             <th>Medicine Name</th>
+                            <th>Category</th>
                             <th>Quantity Received</th>
                             <th>Batch Expiry Date</th>
                             <th>Received Date</th>
@@ -167,27 +225,41 @@ $staff_name = $staff_name ?? '';
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Dynamic stock-in logs will load here -->
-                        <!--
-                        <tr>
-                            <td><strong>SHP-5021</strong></td>
-                            <td>Paracetamol 500mg</td>
-                            <td><span class="qty-badge">+200 Tabs</span></td>
-                            <td>15 Oct 2027</td>
-                            <td>25 Aug 2026</td>
-                            <td>Dr. Anjali Sharma</td>
-                        </tr>
-                        -->
+                        <?php if ($shipments_result && $shipments_result->num_rows > 0): ?>
+                            <?php while ($row = $shipments_result->fetch_assoc()): ?>
+                                <tr>
+                                    <td><strong>#SHP-<?php echo str_pad($row['stockin_id'], 4, '0', STR_PAD_LEFT); ?></strong></td>
+                                    <td><strong><?php echo htmlspecialchars($row['medicine_name']); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($row['category'] ?? 'General'); ?></td>
+                                    <td>
+                                        <span class="qty-badge" style="background: rgba(16,185,129,0.15); color: #10b981; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 12px;">
+                                            +<?php echo (int)$row['quantity_received']; ?> Units
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span style="<?php echo (strtotime($row['expiry_date']) <= strtotime('+60 days')) ? 'color: #f59e0b; font-weight: bold;' : ''; ?>">
+                                            <?php echo date("d M Y", strtotime($row['expiry_date'])); ?>
+                                        </span>
+                                    </td>
+                                    <td><?php echo date("d M Y, h:i A", strtotime($row['received_date'])); ?></td>
+                                    <td><?php echo htmlspecialchars($row['staff_name'] ?? 'Staff Member'); ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+                                    <?php echo !empty($search) ? 'No shipments found matching "' . htmlspecialchars($search) . '"' : 'No incoming shipment logs recorded yet. Click "Receive New Stock" to log one.'; ?>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
-        </div> <!-- End Dashboard Container -->
-        
-        <!-- FOOTER -->
+        </div>
+
         <footer class="main-footer">
             <p>&copy; 2026 MedStock Tracker. All Rights Reserved.</p>
-            <p>Developed for Rural PHCs</p>
         </footer>
 
     </main>
@@ -196,52 +268,66 @@ $staff_name = $staff_name ?? '';
 <!-- ==============================
      RECEIVE STOCK MODAL (Popup)
      ============================== -->
-<div class="modal-overlay" id="stockModal">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h3>Log Incoming Medicine Shipment</h3>
-            <button class="modal-close-btn" id="closeStockModalBtn">&times;</button>
+<div class="modal-overlay" id="stockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 999999;">
+    <div class="modal-card" style="background: var(--bg-card, #1e293b); border: 1px solid var(--border-color, #334155); border-radius: 10px; width: 100%; max-width: 500px; padding: 25px; color: var(--text-primary, #fff); box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Log Incoming Medicine Shipment</h3>
+            <!-- Close Button with direct inline dismiss handler -->
+            <button type="button" class="modal-close-btn" id="closeStockModalBtn" 
+                onclick="document.getElementById('stockModal').style.cssText = 'display: none !important; opacity: 0 !important; visibility: hidden !important;'"
+                style="background: none; border: none; font-size: 26px; color: var(--text-secondary, #94a3b8); cursor: pointer; padding: 5px 10px;">&times;</button>
         </div>
-        <form id="stockForm" class="modal-form">
-            <div class="form-group">
-                <label for="medicine_select">Select Medicine</label>
-                <select id="medicine_select" name="medicine_id" required>
+
+        <form action="stock_in.php" method="POST" id="stockForm" class="modal-form">
+            <input type="hidden" name="action" value="receive_stock">
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="medicine_id" style="display: block; font-size: 12px; margin-bottom: 6px; color: var(--text-secondary);">Select Medicine *</label>
+                <select id="medicine_id" name="medicine_id" required style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; box-sizing: border-box;">
                     <option value="">-- Choose Medicine --</option>
-                    <!-- Dynamic medicine options will load here -->
-                    <!--
-                    <option value="M101">Paracetamol 500mg</option>
-                    -->
+                    <?php if ($medicines_list && $medicines_list->num_rows > 0): ?>
+                        <?php while ($med = $medicines_list->fetch_assoc()): ?>
+                            <option value="<?php echo $med['medicine_id']; ?>">
+                                <?php echo htmlspecialchars($med['medicine_name']); ?> (<?php echo htmlspecialchars($med['category'] ?? 'General'); ?>)
+                            </option>
+                        <?php endwhile; ?>
+                    <?php endif; ?>
                 </select>
             </div>
             
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                 <div class="form-group">
-                    <label for="qty_received">Quantity Received</label>
-                    <input type="number" id="qty_received" name="quantity" min="1" required placeholder="e.g. 100">
+                    <label for="quantity" style="display: block; font-size: 12px; margin-bottom: 6px; color: var(--text-secondary);">Quantity Received *</label>
+                    <input type="number" id="quantity" name="quantity" min="1" required placeholder="e.g. 200" style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; box-sizing: border-box;">
                 </div>
                 <div class="form-group">
-                    <label for="expiry_date">Batch Expiry Date</label>
-                    <input type="date" id="expiry_date" name="expiry_date" required>
+                    <label for="expiry_date" style="display: block; font-size: 12px; margin-bottom: 6px; color: var(--text-secondary);">Batch Expiry Date *</label>
+                    <input type="date" id="expiry_date" name="expiry_date" required min="<?php echo date("Y-m-d"); ?>" style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; box-sizing: border-box;">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>Received Date</label>
-                <input type="text" value="<?php echo date("d-m-Y"); ?>" disabled style="opacity: 0.7; cursor: not-allowed;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label style="display: block; font-size: 12px; margin-bottom: 6px; color: var(--text-secondary);">Received Date</label>
+                    <input type="text" value="<?php echo date("d-m-Y"); ?>" disabled style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: var(--text-secondary); opacity: 0.8; box-sizing: border-box;">
+                </div>
+                <div class="form-group">
+                    <label style="display: block; font-size: 12px; margin-bottom: 6px; color: var(--text-secondary);">Logged By Staff</label>
+                    <input type="text" value="<?php echo $staff_name; ?>" disabled style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: var(--text-secondary); opacity: 0.8; box-sizing: border-box;">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>Logged By Staff</label>
-                <input type="text" value="<?php echo $staff_name; ?>" disabled style="opacity: 0.7; cursor: not-allowed;">
-            </div>
-
-            <button type="submit" class="btn-submit">Save Shipment & Update Inventory</button>
+            <button type="submit" style="width: 100%; padding: 12px; background: #10b981; color: #fff; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer;">
+                <i class="fas fa-save"></i> Save Shipment & Update Inventory
+            </button>
         </form>
     </div>
 </div>
 
-<!-- Scripts -->
 <script src="../js/theme.js"></script>
-<script src="../js/stock_in.js"></script>
+
 </body>
 </html>
+<?php
+$stmt_history->close();
+?>

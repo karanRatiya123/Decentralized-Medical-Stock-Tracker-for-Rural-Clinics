@@ -1,38 +1,29 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const openModalBtn = document.getElementById("openStockModalBtn");
-    const closeModalBtn = document.getElementById("closeStockModalBtn");
-    const stockModal = document.getElementById("stockModal");
-    const stockForm = document.getElementById("stockForm");
-    const successBanner = document.getElementById("stockSuccessBanner");
+// js/stock_in.js
 
-    if (openModalBtn && closeModalBtn && stockModal) {
-        openModalBtn.addEventListener("click", () => {
-            stockModal.classList.add("active");
-        });
-
-        closeModalBtn.addEventListener("click", () => {
-            stockModal.classList.remove("active");
-        });
-
-        window.addEventListener("click", (e) => {
-            if (e.target === stockModal) {
-                stockModal.classList.remove("active");
-            }
-        });
+function openStockModal() {
+    const modal = document.getElementById("stockModal");
+    if (modal) {
+        modal.classList.add("active");
+        modal.style.display = "flex";
+        modal.style.opacity = "1";
+        modal.style.visibility = "visible";
     }
+}
 
-    if (stockForm) {
-        stockForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            stockModal.classList.remove("active");
-            stockForm.reset();
+function closeStockModal() {
+    const modal = document.getElementById("stockModal");
+    if (modal) {
+        modal.classList.remove("active");
+        modal.style.opacity = "0";
+        modal.style.visibility = "hidden";
+        modal.style.display = "none";
+    }
+}
 
-            if (successBanner) {
-                successBanner.style.display = "flex";
-                setTimeout(() => {
-                    successBanner.style.display = "none";
-                }, 4000);
-            }
-        });
+// Close when clicking outside on the background
+window.addEventListener("click", function (e) {
+    const modal = document.getElementById("stockModal");
+    if (e.target === modal) {
+        closeStockModal();
     }
 });
