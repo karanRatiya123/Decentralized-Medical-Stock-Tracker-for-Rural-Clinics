@@ -12,42 +12,110 @@ $district   = htmlspecialchars($_SESSION['district'] ?? 'District HQ');
 $success_msg = '';
 $error_msg   = '';
 // =========================================================================
-// 1. HANDLE CREATE NEW STAFF ACCOUNT (POST)
+// 1. HANDLE CREATE / UPDATE STAFF ACCOUNT (POST)
 // =========================================================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_staff') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['add_staff', 'save_staff'])) {
+    $edit_id    = isset($_POST['edit_id']) && !empty($_POST['edit_id']) ? (int)$_POST['edit_id'] : 0;
     $staff_name = trim($_POST['staff_name'] ?? '');
     $phc_id     = (int)($_POST['phc_id'] ?? 0);
     $username   = trim($_POST['username'] ?? '');
     $password   = trim($_POST['password'] ?? '');
     $shift      = trim($_POST['shift'] ?? 'Morning');
     $contact_no = trim($_POST['contact_no'] ?? '');
-    $status     = trim($_POST['status'] ?? 'Active');
-    if (!empty($staff_name) && $phc_id > 0 && !empty($username) && !empty($password)) {
-        // Check if username is already taken
-        $stmt_check = $conn->prepare("SELECT staff_id FROM staff WHERE username = ?");
-        $stmt_check->bind_param("s", $username);
-        $stmt_check->execute();
-        if ($stmt_check->get_result()->num_rows > 0) {
-            $error_msg = "Username '{$username}' is already in use. Please choose another username.";
-        } else {
-            // Hash password securely
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $stmt_add = $conn->prepare("
-                INSERT INTO staff (phc_id, staff_name, username, password, shift, contact_no, joining_date, status)
-                VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?)
-            ");
-            $stmt_add->bind_param("issssss", $phc_id, $staff_name, $username, $hashed_password, $shift, $contact_no, $status);
-            if ($stmt_add->execute()) {
-                $new_id = $stmt_add->insert_id;
-                $success_msg = "New PHC staff account (#S" . str_pad($new_id, 3, '0', STR_PAD_LEFT) . ") created successfully for {$staff_name}!";
-            } else {
-                $error_msg = "Database error: " . $conn->error;
-            }
-            $stmt_add->close();
-        }
-        $stmt_check->close();
+    $status     = in_array($_POST['status'] ?? '', ['Active', 'Inactive']) ? $_POST['status'] : 'Active';
+
+    if (empty($staff_name) || $phc_id <= 0 || empty($username)) {
+        $error_msg = "Please fill in all required fields (Staff Name, Assigned PHC, and Username).";
     } else {
-        $error_msg = "Please fill in all required fields (Staff Name, Assigned PHC, Username, and Password).";
+        // Validate assigned PHC belongs to this district
+        $stmt_phc_chk = $conn->prepare("SELECT phc_id FROM phcs WHERE phc_id = ? AND (district = ? OR district_admin_id = ?)");
+        $stmt_phc_chk->bind_param("isi", $phc_id, $district, $admin_id);
+        $stmt_phc_chk->execute();
+        if ($stmt_phc_chk->get_result()->num_rows === 0) {
+            $error_msg = "Selected PHC Center is invalid or does not belong to your district jurisdiction.";
+            $stmt_phc_chk->close();
+        } else {
+            $stmt_phc_chk->close();
+
+            if ($edit_id > 0) {
+                // UPDATE EXISTING STAFF ACCOUNT
+                // Verify staff account belongs to this district
+                $stmt_owner = $conn->prepare("
+                    SELECT s.staff_id 
+                    FROM staff s 
+                    JOIN phcs p ON s.phc_id = p.phc_id 
+                    WHERE s.staff_id = ? AND (p.district = ? OR p.district_admin_id = ?)
+                ");
+                $stmt_owner->bind_param("isi", $edit_id, $district, $admin_id);
+                $stmt_owner->execute();
+                if ($stmt_owner->get_result()->num_rows === 0) {
+                    $error_msg = "Unauthorized: You do not have permission to modify this staff account.";
+                    $stmt_owner->close();
+                } else {
+                    $stmt_owner->close();
+
+                    // Check username uniqueness with OTHER accounts
+                    $stmt_chk_user = $conn->prepare("SELECT staff_id FROM staff WHERE username = ? AND staff_id != ?");
+                    $stmt_chk_user->bind_param("si", $username, $edit_id);
+                    $stmt_chk_user->execute();
+                    if ($stmt_chk_user->get_result()->num_rows > 0) {
+                        $error_msg = "Username '{$username}' is already in use by another staff account.";
+                    } else {
+                        if (!empty($password)) {
+                            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                            $stmt_up = $conn->prepare("
+                                UPDATE staff 
+                                SET phc_id = ?, staff_name = ?, username = ?, password = ?, shift = ?, contact_no = ?, status = ? 
+                                WHERE staff_id = ?
+                            ");
+                            $stmt_up->bind_param("issssssi", $phc_id, $staff_name, $username, $hashed_password, $shift, $contact_no, $status, $edit_id);
+                        } else {
+                            $stmt_up = $conn->prepare("
+                                UPDATE staff 
+                                SET phc_id = ?, staff_name = ?, username = ?, shift = ?, contact_no = ?, status = ? 
+                                WHERE staff_id = ?
+                            ");
+                            $stmt_up->bind_param("isssssi", $phc_id, $staff_name, $username, $shift, $contact_no, $status, $edit_id);
+                        }
+
+                        if ($stmt_up->execute()) {
+                            $success_msg = "Staff account #S" . str_pad($edit_id, 3, '0', STR_PAD_LEFT) . " ({$staff_name}) updated successfully!";
+                        } else {
+                            $error_msg = "Database update error: " . $conn->error;
+                        }
+                        $stmt_up->close();
+                    }
+                    $stmt_chk_user->close();
+                }
+            } else {
+                // CREATE NEW STAFF ACCOUNT
+                if (empty($password)) {
+                    $error_msg = "Password is required for a new staff account.";
+                } else {
+                    $stmt_check = $conn->prepare("SELECT staff_id FROM staff WHERE username = ?");
+                    $stmt_check->bind_param("s", $username);
+                    $stmt_check->execute();
+                    if ($stmt_check->get_result()->num_rows > 0) {
+                        $error_msg = "Username '{$username}' is already in use. Please choose another username.";
+                    } else {
+                        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                        $stmt_add = $conn->prepare("
+                            INSERT INTO staff (phc_id, staff_name, username, password, shift, contact_no, joining_date, status)
+                            VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?)
+                        ");
+                        $stmt_add->bind_param("issssss", $phc_id, $staff_name, $username, $hashed_password, $shift, $contact_no, $status);
+                        if ($stmt_add->execute()) {
+                            $new_id = $stmt_add->insert_id;
+                            $success_msg = "New PHC staff account (#S" . str_pad($new_id, 3, '0', STR_PAD_LEFT) . ") created successfully for {$staff_name}!";
+                        } else {
+                            $error_msg = "Database error: " . $conn->error;
+                        }
+                        $stmt_add->close();
+                    }
+                    $stmt_check->close();
+                }
+            }
+        }
     }
 }
 
@@ -62,7 +130,8 @@ $stmt_phcs = $conn->prepare("
 ");
 $stmt_phcs->bind_param("si", $district, $admin_id);
 $stmt_phcs->execute();
-$phcs_list = $stmt_phcs->get_result();
+$phcs_res = $stmt_phcs->get_result();
+$phcs_list = $phcs_res ? $phcs_res->fetch_all(MYSQLI_ASSOC) : [];
 // =========================================================================
 // 3. FETCH STAFF DIRECTORY (WITH SEARCH FILTER)
 // =========================================================================
@@ -160,9 +229,9 @@ $total_staff_count = $staff_result->num_rows;
                         <a href="staff.php" style="padding:10px 14px; background:var(--bg-card, #1e293b); border:1px solid var(--border-color); color:var(--text-secondary); border-radius:6px; text-decoration:none; font-size:13px;">Clear</a>
                     <?php endif; ?>
                 </form>
-                <!-- Unbreakable Modal Open Button -->
-                <button type="button" class="btn-primary-action" 
-                    onclick="document.getElementById('staffModal').style.cssText = 'display:flex !important; opacity:1 !important; visibility:visible !important; position:fixed !important; top:0 !important; left:0 !important; width:100vw !important; height:100vh !important; background:rgba(0,0,0,0.8) !important; z-index:999999 !important; justify-content:center !important; align-items:center !important;'"
+                <!-- Add New Staff Button -->
+                <button type="button" class="btn-primary-action" id="openAddStaffBtn"
+                    onclick="openStaffModal(false)"
                     style="padding:10px 18px; border:none; background:var(--accent-color, #0ea5e9); color:#fff; border-radius:6px; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
                     <i class="fas fa-user-plus"></i> Add New PHC Staff
                 </button>
@@ -183,6 +252,7 @@ $total_staff_count = $staff_result->num_rows;
                             <th>Duty Shift</th>
                             <th>Joining Date</th>
                             <th>Status</th>
+                            <th style="text-align:right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -201,10 +271,23 @@ $total_staff_count = $staff_result->num_rows;
                                             <?php echo htmlspecialchars($s['status'] ?? 'Active'); ?>
                                         </span>
                                     </td>
+                                    <td style="text-align:right;">
+                                        <button type="button" class="btn-action btn-edit edit-staff-btn"
+                                            data-id="<?php echo (int)$s['staff_id']; ?>"
+                                            data-name="<?php echo htmlspecialchars($s['staff_name']); ?>"
+                                            data-phc="<?php echo (int)$s['phc_id']; ?>"
+                                            data-username="<?php echo htmlspecialchars($s['username']); ?>"
+                                            data-shift="<?php echo htmlspecialchars($s['shift']); ?>"
+                                            data-contact="<?php echo htmlspecialchars($s['contact_no'] ?? ''); ?>"
+                                            data-status="<?php echo htmlspecialchars($s['status'] ?? 'Active'); ?>"
+                                            style="padding:6px 14px; background:rgba(14,165,233,0.15); color:#0ea5e9; border:1px solid #0ea5e9; border-radius:5px; font-size:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                    </td>
                                 </tr>
                             <?php endwhile; ?>
                         <?php else: ?>
-                            <tr><td colspan="8" style="text-align:center; color:var(--text-secondary); padding:25px;">No staff accounts found. Click "Add New PHC Staff" to register one.</td></tr>
+                            <tr><td colspan="9" style="text-align:center; color:var(--text-secondary); padding:25px;">No staff accounts found. Click "Add New PHC Staff" to register one.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -214,49 +297,50 @@ $total_staff_count = $staff_result->num_rows;
     </main>
 </div>
 <!-- ==============================
-     ADD NEW PHC STAFF MODAL (Popup)
+     ADD / EDIT PHC STAFF MODAL (Popup)
      ============================== -->
 <div class="modal-overlay" id="staffModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:999999;">
     <div class="modal-card" style="background:var(--bg-card, #1e293b); border:1px solid var(--border-color, #334155); border-radius:10px; width:100%; max-width:500px; padding:25px; color:var(--text-primary, #fff); box-shadow:0 10px 30px rgba(0,0,0,0.6);">
         <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 style="margin:0;">Create PHC Staff Account</h3>
-            <button type="button" class="modal-close-btn" 
-                onclick="document.getElementById('staffModal').style.cssText = 'display:none !important; opacity:0 !important; visibility:hidden !important;'"
+            <h3 style="margin:0;" id="staffModalTitle">Create PHC Staff Account</h3>
+            <button type="button" class="modal-close-btn" onclick="closeStaffModal()"
                 style="background:none; border:none; font-size:26px; color:var(--text-secondary); cursor:pointer;">&times;</button>
         </div>
-        <form action="staff.php" method="POST" class="modal-form">
-            <input type="hidden" name="action" value="add_staff">
+        <form action="staff.php" method="POST" class="modal-form" id="staffForm">
+            <input type="hidden" name="action" value="save_staff">
+            <input type="hidden" name="edit_id" id="staff_edit_id" value="">
             <div class="form-group" style="margin-bottom:15px;">
                 <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary);">Staff Full Name *</label>
-                <input type="text" name="staff_name" required placeholder="e.g. Dr. Anjali Sharma" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                <input type="text" id="staff_name" name="staff_name" required placeholder="e.g. Dr. Anjali Sharma" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
             </div>
             <div class="form-group" style="margin-bottom:15px;">
                 <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary);">Assign to PHC Center *</label>
-                <select name="phc_id" required style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                <select id="staff_phc_id" name="phc_id" required style="width:100%; padding:10px; border:1px solid var(--border-color, #475569); border-radius:6px; box-sizing:border-box; background:var(--bg-input, #334155); color:#fff;">
                     <option value="">-- Choose PHC Center --</option>
-                    <?php if ($phcs_list && $phcs_list->num_rows > 0): ?>
-                        <?php while ($phc = $phcs_list->fetch_assoc()): ?>
-                            <option value="<?php echo $phc['phc_id']; ?>">
+                    <?php if (!empty($phcs_list)): ?>
+                        <?php foreach ($phcs_list as $phc): ?>
+                            <option value="<?php echo (int)$phc['phc_id']; ?>">
                                 <?php echo htmlspecialchars($phc['phc_name']); ?> (<?php echo htmlspecialchars($phc['Taluka']); ?>)
                             </option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     <?php endif; ?>
                 </select>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div class="form-group">
                     <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary);">Login Username *</label>
-                    <input type="text" name="username" required placeholder="e.g. staff_veraval" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                    <input type="text" id="staff_username" name="username" required placeholder="e.g. staff_veraval" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
                 </div>
                 <div class="form-group">
                     <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary);">Account Password *</label>
-                    <input type="password" name="password" required placeholder="Enter password" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                    <input type="password" id="staff_password" name="password" placeholder="Enter password" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                    <small id="staffPasswordHelp" style="display:none; color:var(--text-secondary); font-size:11px; margin-top:4px;">Leave blank to keep current password.</small>
                 </div>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div class="form-group">
                     <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary);">Duty Shift *</label>
-                    <select name="shift" required style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                    <select id="staff_shift" name="shift" required style="width:100%; padding:10px; border:1px solid var(--border-color, #475569); border-radius:6px; box-sizing:border-box; background:var(--bg-input, #334155); color:#fff;">
                         <option value="Morning">Morning Shift</option>
                         <option value="Evening">Evening Shift</option>
                         <option value="Night">Night Shift</option>
@@ -264,23 +348,97 @@ $total_staff_count = $staff_result->num_rows;
                 </div>
                 <div class="form-group">
                     <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary);">Contact Mobile</label>
-                    <input type="tel" name="contact_no" placeholder="e.g. 9876543210" pattern="[0-9]{10}" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                    <input type="tel" id="staff_contact" name="contact_no" placeholder="e.g. 9876543210" pattern="[0-9]{10}" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
                 </div>
             </div>
             <div class="form-group" style="margin-bottom:20px;">
                 <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary);">Account Status</label>
-                <select name="status" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                <select id="staff_status" name="status" style="width:100%; padding:10px; border:1px solid var(--border-color, #475569); border-radius:6px; box-sizing:border-box; background:var(--bg-input, #334155); color:#fff;">
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                 </select>
             </div>
-            <button type="submit" style="width:100%; padding:12px; background:var(--accent-color, #0ea5e9); color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">
-                <i class="fas fa-user-check"></i> Create Staff Account
+            <button type="submit" id="staffSubmitBtn" style="width:100%; padding:12px; background:var(--accent-color, #0ea5e9); color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">
+                <i class="fas fa-user-check"></i> <span id="staffSubmitText">Create Staff Account</span>
             </button>
         </form>
     </div>
 </div>
+
 <script src="../js/theme.js"></script>
+<script>
+function openStaffModal(isEdit = false, data = {}) {
+    const modal = document.getElementById('staffModal');
+    const form = document.getElementById('staffForm');
+    const title = document.getElementById('staffModalTitle');
+    const submitText = document.getElementById('staffSubmitText');
+    const editId = document.getElementById('staff_edit_id');
+    const pwdInput = document.getElementById('staff_password');
+    const pwdHelp = document.getElementById('staffPasswordHelp');
+
+    if (isEdit) {
+        title.textContent = "Edit PHC Staff Member (" + data.name + ")";
+        submitText.textContent = "Save Changes";
+        editId.value = data.id;
+        document.getElementById('staff_name').value = data.name;
+        document.getElementById('staff_phc_id').value = data.phc;
+        document.getElementById('staff_username').value = data.username;
+        document.getElementById('staff_shift').value = data.shift;
+        document.getElementById('staff_contact').value = data.contact;
+        document.getElementById('staff_status').value = data.status;
+
+        pwdInput.required = false;
+        pwdInput.value = "";
+        pwdInput.placeholder = "Leave blank to keep existing password";
+        if (pwdHelp) pwdHelp.style.display = "block";
+    } else {
+        form.reset();
+        title.textContent = "Create PHC Staff Account";
+        submitText.textContent = "Create Staff Account";
+        editId.value = "";
+        pwdInput.required = true;
+        pwdInput.placeholder = "Enter temporary password";
+        if (pwdHelp) pwdHelp.style.display = "none";
+    }
+
+    modal.style.cssText = 'display:flex !important; opacity:1 !important; visibility:visible !important; position:fixed !important; top:0 !important; left:0 !important; width:100vw !important; height:100vh !important; background:rgba(0,0,0,0.8) !important; z-index:999999 !important; justify-content:center !important; align-items:center !important;';
+}
+
+function closeStaffModal() {
+    const modal = document.getElementById('staffModal');
+    if (modal) {
+        modal.style.cssText = 'display:none !important; opacity:0 !important; visibility:hidden !important;';
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Add event listeners for all Edit buttons in the table
+    document.querySelectorAll(".edit-staff-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const data = {
+                id: btn.dataset.id,
+                name: btn.dataset.name,
+                phc: btn.dataset.phc,
+                username: btn.dataset.username,
+                shift: btn.dataset.shift,
+                contact: btn.dataset.contact,
+                status: btn.dataset.status
+            };
+            openStaffModal(true, data);
+        });
+    });
+
+    // Close modal when clicking outside modal-card
+    const modal = document.getElementById("staffModal");
+    if (modal) {
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                closeStaffModal();
+            }
+        });
+    }
+});
+</script>
 </body>
 </html>
 <?php

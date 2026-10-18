@@ -13,7 +13,7 @@ function openActionModal(reqId, action) {
     if (modalTitle) modalTitle.textContent = `${action} Request (${reqId})`;
     if (submitBtn) {
         submitBtn.textContent = `Confirm ${action}`;
-        submitBtn.style.backgroundColor = action === 'Approve' ? '#10b981' : '#ef4444';
+        submitBtn.style.backgroundColor = action === 'Approve' ? '#1E6B3A' : '#A32929';
     }
     if (modal) modal.classList.add('active');
 }

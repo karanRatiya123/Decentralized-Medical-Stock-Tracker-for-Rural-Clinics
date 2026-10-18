@@ -224,7 +224,7 @@ $total_doctors  = $doctors_result->num_rows;
                 </div>
                 <div class="form-group">
                     <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary);">Doctor Type *</label>
-                    <select name="doctor_type" required style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                    <select name="doctor_type" required style="width:100%; padding:10px; border:1px solid var(--border-color, #475569); border-radius:6px; box-sizing:border-box;">
                         <option value="Permanent">Permanent</option>
                         <option value="Visiting">Visiting</option>
                     </select>
@@ -242,7 +242,7 @@ $total_doctors  = $doctors_result->num_rows;
             </div>
             <div class="form-group" style="margin-bottom:20px;">
                 <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary);">Status</label>
-                <select name="status" style="width:100%; padding:10px; background:var(--bg-input, #334155); border:1px solid var(--border-color, #475569); border-radius:6px; color:#fff; box-sizing:border-box;">
+                <select name="status" style="width:100%; padding:10px; border:1px solid var(--border-color, #475569); border-radius:6px; box-sizing:border-box;">
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                 </select>

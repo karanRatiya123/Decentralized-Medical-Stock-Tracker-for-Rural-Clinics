@@ -262,7 +262,7 @@ $total_patients = $patients_result->num_rows;
                 </div>
                 <div class="form-group">
                     <label style="display: block; font-size: 12px; margin-bottom: 6px; color: var(--text-secondary);">Gender *</label>
-                    <select name="gender" required style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; box-sizing: border-box;">
+                    <select name="gender" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #475569); border-radius: 6px; box-sizing: border-box;">
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>

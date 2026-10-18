@@ -283,7 +283,7 @@ $shipments_result = $stmt_history->get_result();
 
             <div class="form-group" style="margin-bottom: 15px;">
                 <label for="medicine_id" style="display: block; font-size: 12px; margin-bottom: 6px; color: var(--text-secondary);">Select Medicine *</label>
-                <select id="medicine_id" name="medicine_id" required style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; box-sizing: border-box;">
+                <select id="medicine_id" name="medicine_id" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #475569); border-radius: 6px; box-sizing: border-box;">
                     <option value="">-- Choose Medicine --</option>
                     <?php if ($medicines_list && $medicines_list->num_rows > 0): ?>
                         <?php while ($med = $medicines_list->fetch_assoc()): ?>

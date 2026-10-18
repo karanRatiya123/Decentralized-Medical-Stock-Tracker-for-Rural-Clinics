@@ -13,23 +13,16 @@ $success_msg = '';
 $error_msg   = '';
 
 // =========================================================================
-// 1. HANDLE PROFILE & PASSWORD UPDATE (POST)
+// 1. HANDLE PROFILE UPDATE (POST)
 // =========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
-    $staff_name   = trim($_POST['staff_name'] ?? '');
-    $contact_no   = trim($_POST['contact_no'] ?? '');
-    $shift        = trim($_POST['shift'] ?? 'Morning');
-    $new_password = trim($_POST['new_password'] ?? '');
+    $staff_name = trim($_POST['staff_name'] ?? '');
+    $contact_no = trim($_POST['contact_no'] ?? '');
+    $shift      = trim($_POST['shift'] ?? 'Morning');
 
     if (!empty($staff_name)) {
-        if (!empty($new_password)) {
-            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            $stmt_up = $conn->prepare("UPDATE staff SET staff_name = ?, contact_no = ?, shift = ?, password = ? WHERE staff_id = ?");
-            $stmt_up->bind_param("ssssi", $staff_name, $contact_no, $shift, $hashed_password, $staff_id);
-        } else {
-            $stmt_up = $conn->prepare("UPDATE staff SET staff_name = ?, contact_no = ?, shift = ? WHERE staff_id = ?");
-            $stmt_up->bind_param("sssi", $staff_name, $contact_no, $shift, $staff_id);
-        }
+        $stmt_up = $conn->prepare("UPDATE staff SET staff_name = ?, contact_no = ?, shift = ? WHERE staff_id = ?");
+        $stmt_up->bind_param("sssi", $staff_name, $contact_no, $shift, $staff_id);
 
         if ($stmt_up->execute()) {
             $_SESSION['staff_name'] = $staff_name;
@@ -323,19 +316,7 @@ $contact_no = htmlspecialchars($staff['contact_no'] ?? '');
                             </div>
                         </div>
 
-                        <!-- Security & Password Section -->
-                        <div class="form-section-title" style="border-top:1px solid var(--border-color, #334155); padding-top:20px;">
-                            <i class="fas fa-lock"></i> Security & Authentication
-                        </div>
 
-                        <div style="margin-bottom:25px;">
-                            <label style="display:block; font-size:12px; margin-bottom:8px; color:var(--text-secondary); font-weight:600;">New Password (Optional)</label>
-                            <div class="input-with-icon">
-                                <i class="fas fa-key"></i>
-                                <input type="password" name="new_password" placeholder="Leave blank if you do not wish to change your password">
-                            </div>
-                            <small style="color:var(--text-secondary); font-size:11px; margin-top:4px; display:block;">Only fill this field if you want to set a new password for your login account.</small>
-                        </div>
 
                         <div style="text-align:right;">
                             <button type="submit" class="btn-primary-action" style="padding:12px 28px; background:var(--accent-color, #0ea5e9); color:#fff; border:none; border-radius:8px; font-weight:bold; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 14px rgba(14, 165, 233, 0.3);">

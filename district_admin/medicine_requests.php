@@ -355,7 +355,7 @@ $requests_result = $stmt_req->get_result();
 
             <div class="form-group" style="margin-bottom: 15px;">
                 <label style="display: block; font-size: 12px; margin-bottom: 6px; color: var(--text-secondary);">Decision / Status *</label>
-                <select name="status" required style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; box-sizing: border-box;">
+                <select name="status" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #475569); border-radius: 6px; box-sizing: border-box;">
                     <option value="">-- Select Decision --</option>
                     <option value="Approved">✅ Approve & Allocate Stock</option>
                     <option value="Rejected">❌ Reject Request</option>

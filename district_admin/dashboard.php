@@ -8,7 +8,21 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
     exit();
 }
 
-$admin_id   = (int)($_SESSION['user_id'] ?? 0);
+$admin_id = (int)($_SESSION['user_id'] ?? 0);
+
+// Verify account is still active
+$stmt_act = $conn->prepare("SELECT status FROM district_admin WHERE district_admin_id = ?");
+$stmt_act->bind_param("i", $admin_id);
+$stmt_act->execute();
+$act_row = $stmt_act->get_result()->fetch_assoc();
+$stmt_act->close();
+if ($act_row && strcasecmp($act_row['status'], 'Inactive') === 0) {
+    session_unset();
+    session_destroy();
+    header("Location: ../login.php?error=deactivated");
+    exit();
+}
+
 $admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'District Admin');
 $district   = htmlspecialchars($_SESSION['district'] ?? 'District HQ');
 

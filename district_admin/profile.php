@@ -1,13 +1,84 @@
 <?php
 session_start();
+require_once '../config/database.php';
 
-$admin_name = $admin_name ?? '';
-$username = $username ?? '';
-$district = $district ?? '';
-$contact = $contact ?? '';
-$email = $email ?? '';
-$role = $role ?? '';
-$pending_requests = $pending_requests ?? '';
+// ── ROUTE GUARD (District Admin Only) ─────────────────────────────────────────
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'district_admin') {
+    header("Location: ../login.php");
+    exit();
+}
+
+$admin_id = (int)$_SESSION['user_id'];
+
+// ── HANDLE PROFILE UPDATE (AJAX / POST) ──────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+
+    $fullname     = trim($_POST['admin_fullname'] ?? '');
+    $contact      = trim($_POST['admin_contact'] ?? '');
+    $email        = trim($_POST['admin_email'] ?? '');
+
+    if (empty($fullname) || empty($contact) || empty($email)) {
+        echo json_encode(['success' => false, 'message' => 'Please fill in all required fields.']);
+        exit();
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
+        exit();
+    }
+
+    $stmt_up = $conn->prepare("UPDATE district_admin SET admin_name = ?, contact_no = ?, email = ? WHERE district_admin_id = ?");
+    $stmt_up->bind_param("sssi", $fullname, $contact, $email, $admin_id);
+
+    if ($stmt_up->execute()) {
+        $stmt_up->close();
+
+        // Update active session variables
+        $_SESSION['admin_name'] = $fullname;
+        $_SESSION['contact_no'] = $contact;
+        $_SESSION['email']      = $email;
+
+        echo json_encode([
+            'success'    => true,
+            'message'    => 'Profile details updated successfully in database!',
+            'admin_name' => htmlspecialchars($fullname),
+            'contact'    => htmlspecialchars($contact),
+            'email'      => htmlspecialchars($email)
+        ]);
+    } else {
+        $stmt_up->close();
+        echo json_encode(['success' => false, 'message' => 'Failed to save changes to database. Please try again.']);
+    }
+    exit();
+}
+
+// ── FETCH CURRENT ADMIN DATA FROM DATABASE ────────────────────────────────────
+$stmt = $conn->prepare("SELECT * FROM district_admin WHERE district_admin_id = ?");
+$stmt->bind_param("i", $admin_id);
+$stmt->execute();
+$admin_data = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+$admin_name = htmlspecialchars($admin_data['admin_name'] ?? $_SESSION['admin_name'] ?? 'District Admin');
+$username   = htmlspecialchars($admin_data['username'] ?? $_SESSION['username'] ?? '');
+$district   = htmlspecialchars($admin_data['district'] ?? $_SESSION['district'] ?? 'District HQ');
+$contact    = htmlspecialchars($admin_data['contact_no'] ?? $_SESSION['contact_no'] ?? '');
+$email      = htmlspecialchars($admin_data['email'] ?? $_SESSION['email'] ?? '');
+$role       = 'District Administrator';
+
+// ── PENDING REQUESTS BADGE ────────────────────────────────────────────────────
+$stmt_pend = $conn->prepare("
+    SELECT COUNT(*) AS cnt
+    FROM medicine_requests mr
+    JOIN phcs p ON mr.phc_id = p.phc_id
+    WHERE (p.district = ? OR p.district_admin_id = ?)
+      AND mr.status = 'Pending'
+");
+$stmt_pend->bind_param("si", $district, $admin_id);
+$stmt_pend->execute();
+$pending_requests = (int)($stmt_pend->get_result()->fetch_assoc()['cnt'] ?? 0);
+$stmt_pend->close();
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -70,7 +141,7 @@ $pending_requests = $pending_requests ?? '';
             <li>
                 <a href="alerts.php">
                     <i class="fas fa-bell"></i>
-                    <span>Alerts & Expiry</span>
+                    <span>Alerts &amp; Expiry</span>
                 </a>
             </li>
             <li>
@@ -93,7 +164,7 @@ $pending_requests = $pending_requests ?? '';
                     <i class="fas fa-user-shield"></i>
                 </div>
                 <div class="user-details">
-                    <h4><?php echo $admin_name; ?></h4>
+                    <h4 id="sidebarAdminName"><?php echo $admin_name; ?></h4>
                     <p>District: <?php echo $district; ?></p>
                 </div>
             </div>
@@ -129,10 +200,15 @@ $pending_requests = $pending_requests ?? '';
         <!-- PAGE CONTENT CONTAINER -->
         <div class="dashboard-container">
 
-            <!-- SUCCESS NOTIFICATION BANNER -->
+            <!-- NOTIFICATION BANNERS -->
             <div class="alert-banner success-banner" id="profileSuccessBanner" style="display: none;">
                 <i class="fas fa-check-circle"></i>
                 <span id="profileBannerText">Profile information updated successfully!</span>
+            </div>
+
+            <div class="alert-banner error-banner" id="profileErrorBanner" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="profileErrorText">An error occurred while updating profile.</span>
             </div>
 
             <div class="profile-layout-grid">
@@ -142,13 +218,13 @@ $pending_requests = $pending_requests ?? '';
                     <div class="profile-avatar-large">
                         <i class="fas fa-user-shield"></i>
                     </div>
-                    <h3><?php echo $admin_name; ?></h3>
+                    <h3 id="cardAdminName"><?php echo $admin_name; ?></h3>
                     <p class="role-badge"><?php echo $role; ?></p>
                     <p class="district-info"><i class="fas fa-map-marker-alt"></i> District Jurisdiction: <strong><?php echo $district; ?></strong></p>
                     
                     <div class="security-note">
                         <i class="fas fa-lock"></i>
-                        <span>Superadmin clearance level granted for medical inventory and PHC governance.</span>
+                        <span>District-level access granted for medical inventory and PHC clinic governance.</span>
                     </div>
                 </div>
 
@@ -161,43 +237,27 @@ $pending_requests = $pending_requests ?? '';
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="admin_fullname">Full Name</label>
-                                <input type="text" id="admin_fullname" value="<?php echo $admin_name; ?>" required>
+                                <input type="text" id="admin_fullname" name="admin_fullname" value="<?php echo $admin_name; ?>" required>
                             </div>
                             <div class="form-group">
                                 <label for="admin_username">Login Username</label>
-                                <input type="text" id="admin_username" value="<?php echo $username; ?>" required readonly style="opacity: 0.7; cursor: not-allowed;">
+                                <input type="text" id="admin_username" name="admin_username" value="<?php echo $username; ?>" required readonly style="opacity: 0.7; cursor: not-allowed;" title="Username cannot be modified">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="admin_contact">Contact Number</label>
-                                <input type="text" id="admin_contact" value="<?php echo $contact; ?>" required>
+                                <input type="text" id="admin_contact" name="admin_contact" value="<?php echo $contact; ?>" required>
                             </div>
                             <div class="form-group">
                                 <label for="admin_email">Official Email Address</label>
-                                <input type="email" id="admin_email" value="<?php echo $email; ?>" required>
+                                <input type="email" id="admin_email" name="admin_email" value="<?php echo $email; ?>" required>
                             </div>
                         </div>
 
-                        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
 
-                        <div class="panel-header" style="margin-bottom: 15px;">
-                            <h3 class="section-title">Change Password</h3>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="current_password">Current Password</label>
-                                <input type="password" id="current_password" placeholder="••••••••">
-                            </div>
-                            <div class="form-group">
-                                <label for="new_password">New Password</label>
-                                <input type="password" id="new_password" placeholder="Leave blank to keep current">
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn-submit-profile">Save Profile Changes</button>
+                        <button type="submit" class="btn-submit-profile" id="saveProfileBtn">Save Profile Changes</button>
                     </form>
                 </div>
 

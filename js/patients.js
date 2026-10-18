@@ -1,63 +1,77 @@
-// js/patients.js
-document.addEventListener("DOMContentLoaded", function () {
-    const openBtn = document.getElementById("openRegisterModalBtn");
-    const closeBtn = document.getElementById("closeModalBtn");
-    const modal = document.getElementById("registerModal");
+document.addEventListener("DOMContentLoaded", () => {
+    // Modal Elements
+    const openModalBtn = document.getElementById("openRegisterModalBtn");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    const registerModal = document.getElementById("registerModal");
+    const registerForm = document.getElementById("registerForm");
+    const successBanner = document.getElementById("successBanner");
 
+    // Drawer Elements
     const historyDrawer = document.getElementById("historyDrawer");
     const closeDrawerBtn = document.getElementById("closeDrawerBtn");
-    const patientLinks = document.querySelectorAll(".patient-name-link");
-    const drawerName = document.getElementById("drawerPatientName");
-    const drawerId = document.getElementById("drawerPatientId");
+    const patientNameLinks = document.querySelectorAll(".patient-name-link");
+    const drawerPatientName = document.getElementById("drawerPatientName");
+    const drawerPatientId = document.getElementById("drawerPatientId");
 
-    // 1. Open Modal
-    if (openBtn && modal) {
-        openBtn.addEventListener("click", function (e) {
-            e.preventDefault();
-            modal.classList.add("active");
-            modal.style.display = "flex";
+    // 1. Open/Close Register Modal
+    if (openModalBtn && closeModalBtn && registerModal) {
+        openModalBtn.addEventListener("click", () => {
+            registerModal.classList.add("active");
+        });
+
+        closeModalBtn.addEventListener("click", () => {
+            registerModal.classList.remove("active");
+        });
+
+        window.addEventListener("click", (e) => {
+            if (e.target === registerModal) {
+                registerModal.classList.remove("active");
+            }
         });
     }
 
-    // 2. Close Modal on 'X' Button
-    if (closeBtn && modal) {
-        closeBtn.addEventListener("click", function (e) {
+    // 2. Handle Mock Registration Submission
+    if (registerForm) {
+        registerForm.addEventListener("submit", (e) => {
             e.preventDefault();
-            modal.classList.remove("active");
-            modal.style.display = "none";
+            registerModal.classList.remove("active");
+            registerForm.reset();
+
+            // Show success banner
+            if (successBanner) {
+                successBanner.style.display = "flex";
+                setTimeout(() => {
+                    successBanner.style.display = "none";
+                }, 4000);
+            }
         });
     }
 
-    // 3. Close Modal on clicking outside the card
-    window.addEventListener("click", function (e) {
-        if (e.target === modal) {
-            modal.classList.remove("active");
-            modal.style.display = "none";
-        }
-    });
-
-    // 4. Open Patient History Drawer
-    patientLinks.forEach(function (link) {
-        link.addEventListener("click", function (e) {
+    // 3. Open/Close Patient History Drawer
+    patientNameLinks.forEach(link => {
+        link.addEventListener("click", (e) => {
             e.preventDefault();
-            const name = this.getAttribute("data-name");
-            const id = this.getAttribute("data-id");
+            const name = link.getAttribute("data-name");
+            const id = link.getAttribute("data-id");
 
-            if (drawerName) drawerName.textContent = name;
-            if (drawerId) drawerId.textContent = "Patient ID: P-" + id;
-            
+            if (drawerPatientName) drawerPatientName.textContent = "History: " + name;
+            if (drawerPatientId) drawerPatientId.textContent = "Patient ID: " + id;
+
             if (historyDrawer) {
                 historyDrawer.classList.add("active");
-                historyDrawer.style.right = "0px";
             }
         });
     });
 
-    // 5. Close Patient History Drawer
     if (closeDrawerBtn && historyDrawer) {
-        closeDrawerBtn.addEventListener("click", function () {
+        closeDrawerBtn.addEventListener("click", () => {
             historyDrawer.classList.remove("active");
-            historyDrawer.style.right = "-400px";
+        });
+
+        window.addEventListener("click", (e) => {
+            if (e.target === historyDrawer) {
+                historyDrawer.classList.remove("active");
+            }
         });
     }
 });

@@ -8,9 +8,22 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
     exit();
 }
 
+// Verify account is still active
+$staff_id = (int)($_SESSION['staff_id'] ?? $_SESSION['user_id'] ?? 0);
+$stmt_act = $conn->prepare("SELECT status FROM staff WHERE staff_id = ?");
+$stmt_act->bind_param("i", $staff_id);
+$stmt_act->execute();
+$act_row = $stmt_act->get_result()->fetch_assoc();
+$stmt_act->close();
+if ($act_row && strcasecmp($act_row['status'], 'Inactive') === 0) {
+    session_unset();
+    session_destroy();
+    header("Location: ../login.php?error=deactivated");
+    exit();
+}
+
 // Extract session variables
 $phc_id     = (int)($_SESSION['phc_id'] ?? 0);
-$staff_id   = (int)($_SESSION['staff_id'] ?? 0);
 $staff_name = htmlspecialchars($_SESSION['staff_name'] ?? 'Staff Member');
 $phc_name   = htmlspecialchars($_SESSION['phc_name'] ?? 'PHC Center');
 $taluka     = htmlspecialchars($_SESSION['taluka'] ?? '');

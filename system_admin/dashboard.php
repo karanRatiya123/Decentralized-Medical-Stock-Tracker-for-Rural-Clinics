@@ -1,12 +1,58 @@
 <?php
 session_start();
+require_once '../config/database.php';
 
-$system_admin_name = $system_admin_name ?? '';
-$total_districts = $total_districts ?? '';
-$total_phcs = $total_phcs ?? '';
-$total_district_admins = $total_district_admins ?? '';
-$pending_phc_requests = $pending_phc_requests ?? '';
-$total_staff_accounts = $total_staff_accounts ?? '';
+// ── ROUTE GUARD (System Admin Only) ───────────────────────────────────────────
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'system_admin') {
+    header("Location: ../login.php");
+    exit();
+}
+
+$admin_id = (int)$_SESSION['user_id'];
+$system_admin_name = htmlspecialchars($_SESSION['system_admin_name'] ?? $_SESSION['username'] ?? 'System Master Admin');
+
+// ── METRIC 1: MANAGED DISTRICTS ───────────────────────────────────────────────
+$res_dist = $conn->query("SELECT COUNT(DISTINCT district) AS cnt FROM district_admin WHERE district IS NOT NULL AND district != ''");
+$total_districts = (int)($res_dist->fetch_assoc()['cnt'] ?? 0);
+
+// ── METRIC 2: TOTAL PHCS ──────────────────────────────────────────────────────
+$res_phcs = $conn->query("SELECT COUNT(*) AS cnt FROM phcs");
+$total_phcs = (int)($res_phcs->fetch_assoc()['cnt'] ?? 0);
+
+// ── METRIC 3: PENDING PHC PROPOSALS ───────────────────────────────────────────
+$res_prop = $conn->query("SELECT COUNT(*) AS cnt FROM phc_creation_requests WHERE status = 'Pending Review'");
+$pending_phc_requests = (int)($res_prop->fetch_assoc()['cnt'] ?? 0);
+
+// ── METRIC 4: DISTRICT ADMINISTRATORS ─────────────────────────────────────────
+$res_da = $conn->query("SELECT COUNT(*) AS cnt FROM district_admin");
+$total_district_admins = (int)($res_da->fetch_assoc()['cnt'] ?? 0);
+
+// ── METRIC 5: TOTAL STAFF ACCOUNTS ────────────────────────────────────────────
+$res_staff = $conn->query("SELECT COUNT(*) AS cnt FROM staff");
+$total_staff_accounts = (int)($res_staff->fetch_assoc()['cnt'] ?? 0);
+
+// ── DISTRICT INFRASTRUCTURE STATUS ────────────────────────────────────────────
+$districts_query = "
+    SELECT da.district_admin_id, da.district, da.admin_name, da.status,
+           COUNT(p.phc_id) AS phc_count
+    FROM district_admin da
+    LEFT JOIN phcs p ON p.district_admin_id = da.district_admin_id OR p.district = da.district
+    GROUP BY da.district_admin_id, da.district, da.admin_name, da.status
+    ORDER BY da.district ASC
+";
+$districts_res = $conn->query($districts_query);
+$districts_data = $districts_res ? $districts_res->fetch_all(MYSQLI_ASSOC) : [];
+
+// ── RECENT INCOMING PHC PROPOSALS ─────────────────────────────────────────────
+$recent_props_query = "
+    SELECT r.*, da.admin_name
+    FROM phc_creation_requests r
+    LEFT JOIN district_admin da ON r.district_admin_id = da.district_admin_id
+    ORDER BY r.submitted_date DESC
+    LIMIT 5
+";
+$recent_props_res = $conn->query($recent_props_query);
+$recent_props = $recent_props_res ? $recent_props_res->fetch_all(MYSQLI_ASSOC) : [];
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -43,7 +89,7 @@ $total_staff_accounts = $total_staff_accounts ?? '';
             <li>
                 <a href="districts.php">
                     <i class="fas fa-map-marked-alt"></i>
-                    <span>Districts & Admins</span>
+                    <span>Districts &amp; Admins</span>
                 </a>
             </li>
             <li>
@@ -63,6 +109,12 @@ $total_staff_accounts = $total_staff_accounts ?? '';
                 <a href="medicines_master.php">
                     <i class="fas fa-pills"></i>
                     <span>Master Medicines</span>
+                </a>
+            </li>
+            <li>
+                <a href="reports.php">
+                    <i class="fas fa-chart-line"></i>
+                    <span>System Analytics</span>
                 </a>
             </li>
             <li>
@@ -122,7 +174,7 @@ $total_staff_accounts = $total_staff_accounts ?? '';
                         <i class="fas fa-map"></i>
                     </div>
                     <div class="metric-info">
-                        <h3><?php echo $total_districts; ?></h3>
+                        <h3><?php echo number_format($total_districts); ?></h3>
                         <p>Managed Districts</p>
                     </div>
                 </div>
@@ -132,7 +184,7 @@ $total_staff_accounts = $total_staff_accounts ?? '';
                         <i class="fas fa-hospital"></i>
                     </div>
                     <div class="metric-info">
-                        <h3><?php echo $total_phcs; ?></h3>
+                        <h3><?php echo number_format($total_phcs); ?></h3>
                         <p>Total Registered PHCs</p>
                     </div>
                 </div>
@@ -142,7 +194,7 @@ $total_staff_accounts = $total_staff_accounts ?? '';
                         <i class="fas fa-file-upload"></i>
                     </div>
                     <div class="metric-info">
-                        <h3><?php echo $pending_phc_requests; ?></h3>
+                        <h3><?php echo number_format($pending_phc_requests); ?></h3>
                         <p>Pending PHC Requests</p>
                     </div>
                 </div>
@@ -152,7 +204,7 @@ $total_staff_accounts = $total_staff_accounts ?? '';
                         <i class="fas fa-users-cog"></i>
                     </div>
                     <div class="metric-info">
-                        <h3><?php echo $total_district_admins; ?></h3>
+                        <h3><?php echo number_format($total_district_admins); ?></h3>
                         <p>District Administrators</p>
                     </div>
                 </div>
@@ -162,7 +214,7 @@ $total_staff_accounts = $total_staff_accounts ?? '';
                         <i class="fas fa-user-friends"></i>
                     </div>
                     <div class="metric-info">
-                        <h3><?php echo $total_staff_accounts; ?></h3>
+                        <h3><?php echo number_format($total_staff_accounts); ?></h3>
                         <p>Total PHC Staff Accounts</p>
                     </div>
                 </div>
@@ -187,15 +239,28 @@ $total_staff_accounts = $total_staff_accounts ?? '';
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Dynamic district infrastructure rows will load here -->
-                            <!--
-                            <tr>
-                                <td><strong>Gir Somnath</strong></td>
-                                <td>Dr. Rajesh Mehta</td>
-                                <td>8 PHCs</td>
-                                <td><span class="badge-status status-active">Active</span></td>
-                            </tr>
-                            -->
+                            <?php if (empty($districts_data)): ?>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                                        No district administrators configured yet.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($districts_data as $row): ?>
+                                    <tr>
+                                        <td><strong><?php echo htmlspecialchars($row['district']); ?></strong></td>
+                                        <td><?php echo htmlspecialchars($row['admin_name']); ?></td>
+                                        <td><?php echo number_format((int)$row['phc_count']); ?> PHCs</td>
+                                        <td>
+                                            <?php if ($row['status'] === 'Active'): ?>
+                                                <span class="badge-status status-active">Active</span>
+                                            <?php else: ?>
+                                                <span class="badge-status status-inactive">Inactive</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -207,17 +272,36 @@ $total_staff_accounts = $total_staff_accounts ?? '';
                         <a href="phc_requests.php" style="font-size: 12px; color: var(--accent-color);">Review All &rarr;</a>
                     </div>
                     <div style="font-size: 13px;">
-                        <!-- Dynamic incoming PHC proposals will load here -->
-                        <!--
-                        <div style="padding: 12px 0; border-bottom: 1px dashed var(--border-color);">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                <strong>Gir Somnath District</strong>
-                                <span class="badge-status status-pending">Pending Review</span>
-                            </div>
-                            <p style="color:var(--text-secondary); margin:0 0 6px 0; font-size:12px;">Proposal for New PHC at Talala Rural</p>
-                            <a href="#" style="color: var(--accent-color); font-size: 11px; text-decoration: underline;"><i class="fas fa-file-pdf"></i> Talala_PHC_Proposal.pdf</a>
-                        </div>
-                        -->
+                        <?php if (empty($recent_props)): ?>
+                            <p style="color: var(--text-secondary); padding: 15px 0; text-align: center;">
+                                No PHC creation proposals received yet.
+                            </p>
+                        <?php else: ?>
+                            <?php foreach ($recent_props as $prop): 
+                                $status_class = match($prop['status']) {
+                                    'Approved' => 'status-active',
+                                    'Rejected' => 'status-inactive',
+                                    default    => 'status-pending'
+                                };
+                            ?>
+                                <div style="padding: 12px 0; border-bottom: 1px dashed var(--border-color);">
+                                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                        <strong><?php echo htmlspecialchars($prop['district']); ?> District</strong>
+                                        <span class="badge-status <?php echo $status_class; ?>">
+                                            <?php echo htmlspecialchars($prop['status']); ?>
+                                        </span>
+                                    </div>
+                                    <p style="color:var(--text-secondary); margin:0 0 6px 0; font-size:12px;">
+                                        <?php echo htmlspecialchars($prop['description']); ?>
+                                    </p>
+                                    <?php if (!empty($prop['document_path'])): ?>
+                                        <a href="../<?php echo htmlspecialchars($prop['document_path']); ?>" target="_blank" style="color: var(--accent-color); font-size: 11px; text-decoration: underline;">
+                                            <i class="fas fa-file-pdf"></i> View Attached Proposal
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
 

@@ -4,6 +4,10 @@ require_once 'config/database.php';
 
 $error = '';
 
+if (isset($_GET['error']) && $_GET['error'] === 'deactivated') {
+    $error = "Your account has been deactivated. Please contact your administrator.";
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
@@ -14,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 1. CHECK STAFF TABLE
         // ========================================================
         $stmt_staff = $conn->prepare("
-            SELECT s.*, p.phc_name, p.Taluka, p.district 
+            SELECT s.*, p.phc_name, p.Taluka, p.district, p.status AS phc_status
             FROM staff s 
             LEFT JOIN phcs p ON s.phc_id = p.phc_id 
             WHERE s.username = ?
@@ -25,59 +29,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user_staff = $result_staff->fetch_assoc();
 
         if ($user_staff && (password_verify($password, $user_staff['password']) || $password === $user_staff['password'])) {
-            $_SESSION['user_id']    = $user_staff['staff_id'];
-            $_SESSION['staff_id']   = $user_staff['staff_id'];
-            $_SESSION['username']   = $user_staff['username'];
-            $_SESSION['staff_name'] = $user_staff['staff_name'];
-            $_SESSION['role']       = 'staff';
-            $_SESSION['phc_id']     = $user_staff['phc_id'];
-            $_SESSION['phc_name']   = $user_staff['phc_name'] ?? '';
-            $_SESSION['taluka']     = $user_staff['Taluka'] ?? '';
-            $_SESSION['district']   = $user_staff['district'] ?? '';
-            $_SESSION['shift']      = $user_staff['shift'];
+            // Check if Staff account is Inactive
+            if (isset($user_staff['status']) && strcasecmp($user_staff['status'], 'Inactive') === 0) {
+                $error = "This staff account has been deactivated. Please contact your District Administrator.";
+            } elseif (isset($user_staff['phc_status']) && strcasecmp($user_staff['phc_status'], 'Inactive') === 0) {
+                $error = "Your assigned PHC center (" . htmlspecialchars($user_staff['phc_name']) . ") is currently inactive.";
+            } else {
+                $_SESSION['user_id']    = $user_staff['staff_id'];
+                $_SESSION['staff_id']   = $user_staff['staff_id'];
+                $_SESSION['username']   = $user_staff['username'];
+                $_SESSION['staff_name'] = $user_staff['staff_name'];
+                $_SESSION['role']       = 'staff';
+                $_SESSION['phc_id']     = $user_staff['phc_id'];
+                $_SESSION['phc_name']   = $user_staff['phc_name'] ?? '';
+                $_SESSION['taluka']     = $user_staff['Taluka'] ?? '';
+                $_SESSION['district']   = $user_staff['district'] ?? '';
+                $_SESSION['shift']      = $user_staff['shift'];
 
-            header("Location: Staff/dashboard.php");
-            exit();
+                header("Location: Staff/dashboard.php");
+                exit();
+            }
         }
 
         // ========================================================
         // 2. CHECK DISTRICT ADMIN TABLE
         // ========================================================
-        $stmt_dist = $conn->prepare("SELECT * FROM district_admin WHERE username = ?");
-        $stmt_dist->bind_param("s", $username);
-        $stmt_dist->execute();
-        $result_dist = $stmt_dist->get_result();
-        $user_dist = $result_dist->fetch_assoc();
+        if (empty($error)) {
+            $stmt_dist = $conn->prepare("SELECT * FROM district_admin WHERE username = ?");
+            $stmt_dist->bind_param("s", $username);
+            $stmt_dist->execute();
+            $result_dist = $stmt_dist->get_result();
+            $user_dist = $result_dist->fetch_assoc();
 
-        if ($user_dist && (password_verify($password, $user_dist['password']) || $password === $user_dist['password'])) {
-            $_SESSION['user_id']           = $user_dist['district_admin_id'];
-            $_SESSION['district_admin_id'] = $user_dist['district_admin_id'];
-            $_SESSION['admin_name']        = $user_dist['admin_name'];
-            $_SESSION['username']          = $user_dist['username'];
-            $_SESSION['role']              = 'district_admin';
-            $_SESSION['district']          = $user_dist['district'];
-            $_SESSION['email']             = $user_dist['email'] ?? '';
-            $_SESSION['contact_no']        = $user_dist['contact_no'] ?? '';
+            if ($user_dist && (password_verify($password, $user_dist['password']) || $password === $user_dist['password'])) {
+                // Check if District Admin account is Inactive
+                if (isset($user_dist['status']) && strcasecmp($user_dist['status'], 'Inactive') === 0) {
+                    $error = "This District Administrator account has been deactivated. Please contact the System Master Admin.";
+                } else {
+                    $_SESSION['user_id']           = $user_dist['district_admin_id'];
+                    $_SESSION['district_admin_id'] = $user_dist['district_admin_id'];
+                    $_SESSION['admin_name']        = $user_dist['admin_name'];
+                    $_SESSION['username']          = $user_dist['username'];
+                    $_SESSION['role']              = 'district_admin';
+                    $_SESSION['district']          = $user_dist['district'];
+                    $_SESSION['email']             = $user_dist['email'] ?? '';
+                    $_SESSION['contact_no']        = $user_dist['contact_no'] ?? '';
 
-            header("Location: district_admin/dashboard.php");
-            exit();
+                    header("Location: district_admin/dashboard.php");
+                    exit();
+                }
+            }
         }
 
         // ========================================================
         // 3. CHECK SYSTEM ADMIN (MASTER ROOT)
         // ========================================================
-        if ($username === 'root_admin' && $password === 'admin123') {
-            $_SESSION['user_id']           = 1;
-            $_SESSION['system_admin_name'] = 'Super Admin (State IT Cell)';
-            $_SESSION['username']          = 'root_admin';
-            $_SESSION['role']              = 'system_admin';
+        if (empty($error)) {
+            $stmt_sys = $conn->prepare("SELECT * FROM system_admin WHERE username = ?");
+            $stmt_sys->bind_param("s", $username);
+            $stmt_sys->execute();
+            $result_sys = $stmt_sys->get_result();
+            $user_sys = $result_sys->fetch_assoc();
 
-            header("Location: system_admin/dashboard.php");
-            exit();
+            if ($user_sys && (password_verify($password, $user_sys['password']) || $password === $user_sys['password'])) {
+                if (isset($user_sys['status']) && strcasecmp($user_sys['status'], 'Inactive') === 0) {
+                    $error = "This System Administrator account has been deactivated.";
+                } else {
+                    $_SESSION['user_id']           = $user_sys['admin_id'];
+                    $_SESSION['system_admin_name'] = $user_sys['admin_name'];
+                    $_SESSION['username']          = $user_sys['username'];
+                    $_SESSION['role']              = 'system_admin';
+
+                    header("Location: system_admin/dashboard.php");
+                    exit();
+                }
+            }
         }
 
-        // If credentials did not match any of the 3 roles
-        $error = "Invalid username or password.";
+        // If credentials did not match any of the 3 roles and no specific deactivation message was set
+        if (empty($error)) {
+            $error = "Invalid username or password.";
+        }
 
     } else {
         $error = "Please fill in all required fields.";

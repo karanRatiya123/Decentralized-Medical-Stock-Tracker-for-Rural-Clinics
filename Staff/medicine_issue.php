@@ -211,7 +211,7 @@ $recent_issues = $stmt_recent->get_result();
                             <label for="patient_id" style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: var(--text-primary);">
                                 Select Patient *
                             </label>
-                            <select name="patient_id" id="patient_id" required style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; box-sizing: border-box;">
+                            <select name="patient_id" id="patient_id" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #475569); border-radius: 6px; box-sizing: border-box;">
                                 <option value="">-- Choose Patient --</option>
                                 <?php if ($patients_query && $patients_query->num_rows > 0): ?>
                                     <?php while ($pat = $patients_query->fetch_assoc()): ?>
@@ -227,7 +227,7 @@ $recent_issues = $stmt_recent->get_result();
                             <label for="doctor_id" style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: var(--text-primary);">
                                 Prescribing Doctor *
                             </label>
-                            <select name="doctor_id" id="doctor_id" required style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; box-sizing: border-box;">
+                            <select name="doctor_id" id="doctor_id" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #475569); border-radius: 6px; box-sizing: border-box;">
                                 <option value="">-- Choose Doctor --</option>
                                 <?php if ($doctors_query && $doctors_query->num_rows > 0): ?>
                                     <?php while ($doc = $doctors_query->fetch_assoc()): ?>
@@ -249,7 +249,7 @@ $recent_issues = $stmt_recent->get_result();
                         <div id="medicinesContainer">
                             <div class="medicine-row" style="display: flex; gap: 15px; align-items: center; margin-bottom: 12px;">
                                 <div style="flex: 3;">
-                                    <select name="medicine_id[]" required style="width: 100%; padding: 10px; background: var(--bg-input, #334155); border: 1px solid var(--border-color, #475569); border-radius: 6px; color: #fff; box-sizing: border-box;">
+                                    <select name="medicine_id[]" required style="width: 100%; padding: 10px; border: 1px solid var(--border-color, #475569); border-radius: 6px; box-sizing: border-box;">
                                         <option value="">-- Select Available Medicine --</option>
                                         <?php if ($available_medicines && $available_medicines->num_rows > 0): ?>
                                             <?php foreach ($available_medicines as $med): ?>

@@ -15,7 +15,7 @@ function openReviewModal(reqId, action) {
     
     if (submitBtn) {
         submitBtn.textContent = action === 'Approve' ? 'Confirm Approval & Insert into Database' : 'Confirm Rejection';
-        submitBtn.style.backgroundColor = action === 'Approve' ? '#10b981' : '#ef4444';
+        submitBtn.style.backgroundColor = action === 'Approve' ? '#1E6B3A' : '#A32929';
     }
     
     // Show database fields only when approving, hide when rejecting

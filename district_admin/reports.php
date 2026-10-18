@@ -1,21 +1,52 @@
 <?php
 session_start();
+require_once '../config/database.php';
 
-$admin_name = $admin_name ?? '';
-$district = $district ?? '';
-$pending_requests = $pending_requests ?? '';
+// ── ROUTE GUARD ───────────────────────────────────────────────────────────────
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'district_admin') {
+    header("Location: ../login.php");
+    exit();
+}
+
+$admin_id   = (int)$_SESSION['user_id'];
+$admin_name = htmlspecialchars($_SESSION['admin_name'] ?? 'District Admin');
+$district   = htmlspecialchars($_SESSION['district']   ?? 'District HQ');
+
+// ── PENDING BADGE ─────────────────────────────────────────────────────────────
+$stmt_pend = $conn->prepare("
+    SELECT COUNT(*) AS cnt
+    FROM medicine_requests mr
+    JOIN phcs p ON mr.phc_id = p.phc_id
+    WHERE (p.district = ? OR p.district_admin_id = ?)
+      AND mr.status = 'Pending'
+");
+$stmt_pend->bind_param("si", $district, $admin_id);
+$stmt_pend->execute();
+$pending_requests = (int)($stmt_pend->get_result()->fetch_assoc()['cnt'] ?? 0);
+$stmt_pend->close();
+
+// ── PHC DROPDOWN LIST ─────────────────────────────────────────────────────────
+$stmt_phcs = $conn->prepare("
+    SELECT phc_id, phc_name
+    FROM phcs
+    WHERE district_admin_id = ? OR district = ?
+    ORDER BY phc_name ASC
+");
+$stmt_phcs->bind_param("is", $admin_id, $district);
+$stmt_phcs->execute();
+$phc_list = $stmt_phcs->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_phcs->close();
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>District Reports & Analytics - MedStock Tracker</title>
+    <title>District Reports &amp; Analytics - MedStock Tracker</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/district_admin.css">
     <link rel="stylesheet" href="../css/district_reports.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js CDN for Graphical Representation -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -41,10 +72,10 @@ $pending_requests = $pending_requests ?? '';
             <li>
                 <a href="medicine_requests.php">
                     <i class="fas fa-file-invoice"></i><span>Medicine Requests</span>
-                    <span class="badge" style="background:#f59e0b; color:#fff; padding:2px 6px; border-radius:10px; font-size:10px; float:right;"><?php echo $pending_requests; ?></span>
+                    <span class="badge" style="background:#f59e0b;color:#fff;padding:2px 6px;border-radius:10px;font-size:10px;float:right;"><?php echo $pending_requests; ?></span>
                 </a>
             </li>
-            <li><a href="alerts.php"><i class="fas fa-bell"></i><span>Alerts & Expiry</span></a></li>
+            <li><a href="alerts.php"><i class="fas fa-bell"></i><span>Alerts &amp; Expiry</span></a></li>
             <li class="active"><a href="reports.php"><i class="fas fa-chart-bar"></i><span>District Reports</span></a></li>
             <li><a href="profile.php"><i class="fas fa-user-shield"></i><span>Admin Profile</span></a></li>
         </ul>
@@ -69,8 +100,8 @@ $pending_requests = $pending_requests ?? '';
         <!-- TOP HEADER BAR -->
         <header class="top-header">
             <div class="header-left">
-                <h2>District Analytics & Reports</h2>
-                <p>Comprehensive health intelligence and supply chain metrics for <?php echo $district; ?></p>
+                <h2>District Analytics &amp; Reports</h2>
+                <p id="reportSubtitle">Comprehensive health intelligence and supply chain metrics for <?php echo $district; ?></p>
             </div>
             <div class="header-right">
                 <button class="theme-toggle-btn" id="themeToggleBtn" title="Switch Theme"><i class="fas fa-sun"></i></button>
@@ -92,34 +123,55 @@ $pending_requests = $pending_requests ?? '';
                 <div class="filter-field">
                     <label>Select PHC Center</label>
                     <select id="reportPhcSelect" class="filter-select">
-                        <option value="all">All PHCs (District Aggregate)</option>
-                        <!-- Dynamic PHC options will load here -->
-                        <!--
-                        <option value="veraval">PHC Veraval</option>
-                        -->
+                        <option value="0">All PHCs (District Aggregate)</option>
+                        <?php foreach ($phc_list as $phc): ?>
+                            <option value="<?php echo (int)$phc['phc_id']; ?>">
+                                <?php echo htmlspecialchars($phc['phc_name']); ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="filter-field">
                     <label>Report Category</label>
                     <select id="reportCategorySelect" class="filter-select">
                         <option value="overview">Comprehensive Overview</option>
-                        <option value="inventory">Inventory & Stock Valuation</option>
-                        <option value="usage">Medicine Consumption & Usage</option>
+                        <option value="inventory">Inventory &amp; Stock Valuation</option>
+                        <option value="usage">Medicine Consumption &amp; Usage</option>
                         <option value="visits">Patient Visit Statistics</option>
                     </select>
                 </div>
                 <div class="filter-field">
                     <label>Time Period</label>
                     <select id="reportPeriodSelect" class="filter-select">
-                        <option value="month">Current Month (August 2026)</option>
-                        <option value="quarter">Last Quarter (Q2)</option>
-                        <option value="year">Year to Date (2026)</option>
+                        <option value="month">Current Month (<?php echo date('F Y'); ?>)</option>
+                        <option value="quarter">Last 3 Months</option>
+                        <option value="year">Year to Date (<?php echo date('Y'); ?>)</option>
                     </select>
                 </div>
-                <div class="filter-field" style="display: flex; align-items: flex-end;">
+                <div class="filter-field" style="display:flex;align-items:flex-end;">
                     <button type="button" class="btn-generate" id="generateReportBtn">
                         <i class="fas fa-sync-alt"></i> Generate Report
                     </button>
+                </div>
+            </div>
+
+            <!-- KPI SUMMARY METRICS -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:15px; margin-bottom:20px;">
+                <div class="data-panel" style="padding:16px; border-left:4px solid #0ea5e9;">
+                    <span style="font-size:12px; color:var(--text-secondary); text-transform:uppercase; font-weight:600;"><i class="fas fa-users" style="color:#0ea5e9; margin-right:6px;"></i>Patient Visits</span>
+                    <h3 id="kpiVisits" style="font-size:24px; margin:8px 0 0 0; color:var(--text-primary);">--</h3>
+                </div>
+                <div class="data-panel" style="padding:16px; border-left:4px solid #10b981;">
+                    <span style="font-size:12px; color:var(--text-secondary); text-transform:uppercase; font-weight:600;"><i class="fas fa-pills" style="color:#10b981; margin-right:6px;"></i>Units Dispensed</span>
+                    <h3 id="kpiDispensed" style="font-size:24px; margin:8px 0 0 0; color:var(--text-primary);">--</h3>
+                </div>
+                <div class="data-panel" style="padding:16px; border-left:4px solid #8b5cf6;">
+                    <span style="font-size:12px; color:var(--text-secondary); text-transform:uppercase; font-weight:600;"><i class="fas fa-boxes" style="color:#8b5cf6; margin-right:6px;"></i>Stock In Batches</span>
+                    <h3 id="kpiBatches" style="font-size:24px; margin:8px 0 0 0; color:var(--text-primary);">--</h3>
+                </div>
+                <div class="data-panel" style="padding:16px; border-left:4px solid #f59e0b;">
+                    <span style="font-size:12px; color:var(--text-secondary); text-transform:uppercase; font-weight:600;"><i class="fas fa-clock" style="color:#f59e0b; margin-right:6px;"></i>Pending Requests</span>
+                    <h3 id="kpiRequests" style="font-size:24px; margin:8px 0 0 0; color:var(--text-primary);">--</h3>
                 </div>
             </div>
 
@@ -148,7 +200,10 @@ $pending_requests = $pending_requests ?? '';
             <div class="data-panel">
                 <div class="panel-header">
                     <h3 class="section-title" id="tableReportTitle">District Performance Summary Table</h3>
-                    <span style="font-size: 12px; color: var(--text-secondary);">Showing real-time synced records</span>
+                    <span id="liveStatusBadge" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#10b981;">
+                        <span style="width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;display:inline-block;"></span>
+                        Live Synced <small id="lastUpdatedTime" style="color:var(--text-secondary);margin-left:4px;">(connecting...)</small>
+                    </span>
                 </div>
                 <table class="data-table" id="reportDataTable">
                     <thead>
@@ -161,18 +216,12 @@ $pending_requests = $pending_requests ?? '';
                             <th>Efficiency Score</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Dynamic report rows will load here -->
-                        <!--
+                    <tbody id="reportTableBody">
                         <tr>
-                            <td><strong>PHC Veraval</strong></td>
-                            <td>1,420 Patients</td>
-                            <td>3,850 Units</td>
-                            <td>12 Batches</td>
-                            <td>1 Pending</td>
-                            <td><span class="badge-score score-high">94% (Optimal)</span></td>
+                            <td colspan="6" style="text-align:center;padding:2rem;color:var(--text-secondary);">
+                                <i class="fas fa-sync-alt fa-spin"></i> Loading report data...
+                            </td>
                         </tr>
-                        -->
                     </tbody>
                 </table>
             </div>
@@ -181,7 +230,7 @@ $pending_requests = $pending_requests ?? '';
         
         <!-- FOOTER -->
         <footer class="main-footer">
-            <p>&copy; 2026 MedStock Tracker. District Administration Analytics & Reporting Module.</p>
+            <p>&copy; 2026 MedStock Tracker. District Administration Analytics &amp; Reporting Module.</p>
         </footer>
 
     </main>
