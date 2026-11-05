@@ -15,12 +15,14 @@ $phc_name   = htmlspecialchars($_SESSION['phc_name'] ?? 'PHC Center');
 $taluka     = htmlspecialchars($_SESSION['taluka'] ?? '');
 $district   = htmlspecialchars($_SESSION['district'] ?? '');
 
-$success_msg = '';
+$success_msg = $_SESSION['success_msg'] ?? '';
 $error_msg   = '';
+unset($_SESSION['success_msg']); // Clears it so it only shows once
 
 // Handle New Patient Registration
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_patient') {
-    $patient_name = trim($_POST['patient_name'] ?? '');
+    $is_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    $patient_name = trim($_POST['patient_name']??'');
     $age          = !empty($_POST['age']) ? (int)$_POST['age'] : null;
     $gender       = trim($_POST['gender'] ?? '');
     $mobile_no    = trim($_POST['mobile_no'] ?? '');
@@ -35,13 +37,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
         if ($stmt_insert->execute()) {
             $new_patient_id = $stmt_insert->insert_id;
-            $success_msg = "Patient registered successfully! Patient ID: P-" . str_pad($new_patient_id, 4, '0', STR_PAD_LEFT);
-        } else {
-            $error_msg = "Error registering patient: " . $conn->error;
+            $_SESSION['success_msg'] = "Patient registered successfully! Patient ID: P-" . str_pad($new_patient_id, 4, '0', STR_PAD_LEFT);
+            header("Location: patients.php");
+            exit();
+        }
+        else {
+            $err = "Error registering patient: " . $conn->error;
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => $err]);
+                exit();
+            }
+            $error_msg = $err;
         }
         $stmt_insert->close();
-    } else {
-        $error_msg = "Please fill in all required fields (Name & Gender).";
+    } 
+    else {
+        $err = "Please fill in all required fields (Name & Gender).";
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => $err]);
+            exit();
+        }
+        $error_msg = $err;
     }
 }
 
@@ -168,7 +186,7 @@ $total_patients = $patients_result->num_rows;
                     <?php endif; ?>
                 </form>
 
-                <button type="button" class="btn-primary-action" id="openRegisterModalBtn" style="padding: 10px 18px; border: none; background: var(--accent-color, #0ea5e9); color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <button type="button" class="btn-primary-action" id="openRegisterModalBtn" onclick="document.getElementById('registerModal').style.display='flex'; document.getElementById('registerModal').classList.add('active');" style="padding: 10px 18px; border: none; background: var(--accent-color, #0ea5e9); color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                     <i class="fas fa-user-plus"></i> Register New Patient
                 </button>
             </div>
@@ -240,14 +258,14 @@ $total_patients = $patients_result->num_rows;
 <!-- ==============================
      REGISTER PATIENT MODAL
      ============================== -->
-<div class="modal-overlay" id="registerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000;">
+<div class="modal-overlay" id="registerModal" onclick="if(event.target === this) { this.style.display='none'; this.classList.remove('active'); }" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000;">
     <div class="modal-card" style="background: var(--bg-card, #1e293b); border: 1px solid var(--border-color, #334155); border-radius: 10px; width: 100%; max-width: 480px; padding: 25px; color: var(--text-primary, #fff); box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="margin: 0;">Register New Patient</h3>
-            <button type="button" class="modal-close-btn" id="closeModalBtn" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
+            <button type="button" class="modal-close-btn" id="closeModalBtn" onclick="document.getElementById('registerModal').style.display='none'; document.getElementById('registerModal').classList.remove('active');" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
         </div>
         
-        <form action="patients.php" method="POST" id="registerForm" class="modal-form">
+        <form action="patients.php" method="POST" id="newPatientForm" class="modal-form">
             <input type="hidden" name="action" value="add_patient">
 
             <div class="form-group" style="margin-bottom: 15px;">
@@ -297,7 +315,7 @@ $total_patients = $patients_result->num_rows;
             <h3 id="drawerPatientName" style="margin: 0; font-size: 16px;">Patient History</h3>
             <span id="drawerPatientId" style="font-size: 12px; color: var(--text-secondary);">ID: -</span>
         </div>
-        <button type="button" id="closeDrawerBtn" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
+        <button type="button" id="closeDrawerBtn" onclick="document.getElementById('historyDrawer').style.right='-400px'; document.getElementById('historyDrawer').classList.remove('active');" style="background: none; border: none; font-size: 24px; color: var(--text-secondary); cursor: pointer;">&times;</button>
     </div>
     
     <div id="drawerContent">
@@ -307,7 +325,7 @@ $total_patients = $patients_result->num_rows;
 
 <!-- External JavaScript Files -->
 <script src="../js/theme.js"></script>
-<script src="../js/patients.js"></script>
+<script src="../js/patients.js?v=<?php echo time(); ?>"></script>
 
 </body>
 </html>

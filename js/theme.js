@@ -77,4 +77,33 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     });
+
+    /* 5. LIVE CLOCK (Real-time ticking clock across all pages) */
+    const clockDisplays = document.querySelectorAll(".date-time-display");
+    if (clockDisplays.length > 0) {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        function tickClock() {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, "0");
+            const mon = months[now.getMonth()];
+            const year = now.getFullYear();
+            let hours = now.getHours();
+            const ampm = hours >= 12 ? "PM" : "AM";
+            hours = hours % 12;
+            hours = hours ? String(hours).padStart(2, "0") : "12";
+            const mins = String(now.getMinutes()).padStart(2, "0");
+            const secs = String(now.getSeconds()).padStart(2, "0");
+            const formatted = `${day} ${mon} ${year}, ${hours}:${mins}:${secs} ${ampm}`;
+            clockDisplays.forEach(el => {
+                const span = el.querySelector("span");
+                if (span) {
+                    span.textContent = formatted;
+                } else {
+                    el.textContent = formatted;
+                }
+            });
+        }
+        tickClock();
+        setInterval(tickClock, 1000);
+    }
 });

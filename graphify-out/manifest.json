@@ -1,0 +1,926 @@
+{
+  "Staff/dashboard.php": {
+    "mtime": 1792535562.4651277,
+    "seen": 1792590183.112777,
+    "ast_hash": "f4fbf4d449ff52ecd156fa05f5d493e2",
+    "semantic_hash": ""
+  },
+  "Staff/doctors.php": {
+    "mtime": 1792535562.481011,
+    "seen": 1792590183.112777,
+    "ast_hash": "d25ee3018664db9a5ff0b8b17d7fdcc8",
+    "semantic_hash": ""
+  },
+  "Staff/inventory.php": {
+    "mtime": 1792535562.492412,
+    "seen": 1792590183.112777,
+    "ast_hash": "283f9ec15219ce6489a865f138cfaa4b",
+    "semantic_hash": ""
+  },
+  "Staff/medicine_issue.php": {
+    "mtime": 1792535562.501046,
+    "seen": 1792590183.112777,
+    "ast_hash": "538008faed0b84fdcc83c331e0d03a32",
+    "semantic_hash": ""
+  },
+  "Staff/medicine_requests.php": {
+    "mtime": 1792535562.5110805,
+    "seen": 1792590183.112777,
+    "ast_hash": "cd317f39f0d4a133d97b3a335eb71f28",
+    "semantic_hash": ""
+  },
+  "Staff/patients.php": {
+    "mtime": 1792750206.8221984,
+    "seen": 1792766000.3682115,
+    "ast_hash": "1ae9ad0964921dfb7616f20973ba4f60",
+    "semantic_hash": ""
+  },
+  "Staff/profile.php": {
+    "mtime": 1792535562.5371225,
+    "seen": 1792590183.112777,
+    "ast_hash": "a78a4bfc5f8d985b5d4bc4b3a43b58e6",
+    "semantic_hash": ""
+  },
+  "Staff/reports.php": {
+    "mtime": 1792535562.5443268,
+    "seen": 1792590183.112777,
+    "ast_hash": "ed216f8ea7127832f175f1ea149fbd8d",
+    "semantic_hash": ""
+  },
+  "Staff/stock_in.php": {
+    "mtime": 1792535562.5635023,
+    "seen": 1792590183.112777,
+    "ast_hash": "7f4440e21b26aa49db11781a1da2be41",
+    "semantic_hash": ""
+  },
+  "config/database.php": {
+    "mtime": 1792535562.589084,
+    "seen": 1792590183.112777,
+    "ast_hash": "179b7fd76390b76e76a4cbc699d18944",
+    "semantic_hash": ""
+  },
+  "district_admin/alerts.php": {
+    "mtime": 1792535563.0873888,
+    "seen": 1792590183.112777,
+    "ast_hash": "287bec03957e872c1be998053e0a28ac",
+    "semantic_hash": ""
+  },
+  "district_admin/dashboard.php": {
+    "mtime": 1792535563.0996795,
+    "seen": 1792590183.112777,
+    "ast_hash": "fffc4812ce44795e6ba373d994cf7433",
+    "semantic_hash": ""
+  },
+  "district_admin/get_report_data.php": {
+    "mtime": 1792535563.0996795,
+    "seen": 1792590183.112777,
+    "ast_hash": "f652df1b83495efd64e88b2459d9f5e3",
+    "semantic_hash": ""
+  },
+  "district_admin/inventory.php": {
+    "mtime": 1792595931.4456775,
+    "seen": 1792673550.4701848,
+    "ast_hash": "f5b79fb4123f9ca9ed8da5e495f402e4",
+    "semantic_hash": ""
+  },
+  "district_admin/medicine_requests.php": {
+    "mtime": 1792595051.6396222,
+    "seen": 1792673550.4701848,
+    "ast_hash": "2e8068e20f25fad38c0ed8113889730c",
+    "semantic_hash": ""
+  },
+  "district_admin/phcs.php": {
+    "mtime": 1792535563.1645253,
+    "seen": 1792590183.112777,
+    "ast_hash": "978620e5d72eb942754791e546ca7cfa",
+    "semantic_hash": ""
+  },
+  "district_admin/profile.php": {
+    "mtime": 1792535563.1745636,
+    "seen": 1792590183.112777,
+    "ast_hash": "ec0a3e8b57b32b612953f8954197d0d1",
+    "semantic_hash": ""
+  },
+  "district_admin/reports.php": {
+    "mtime": 1792535563.184342,
+    "seen": 1792590183.112777,
+    "ast_hash": "c14ca01c3956e8af99c4b9da142cc33a",
+    "semantic_hash": ""
+  },
+  "district_admin/staff.php": {
+    "mtime": 1792535563.1941173,
+    "seen": 1792590183.112777,
+    "ast_hash": "f7860254da2abfc7b63be9345a2baa34",
+    "semantic_hash": ""
+  },
+  "includes/reports_body.php": {
+    "mtime": 1792535563.288612,
+    "seen": 1792590183.112777,
+    "ast_hash": "943f333a98ec917cadcc0770bf6b025e",
+    "semantic_hash": ""
+  },
+  "js/district_alerts.js": {
+    "mtime": 1792535563.3047407,
+    "seen": 1792590183.112777,
+    "ast_hash": "e708a0b9ac72a9b306cb5462f724028c",
+    "semantic_hash": ""
+  },
+  "js/district_inventory.js": {
+    "mtime": 1792595953.1085758,
+    "seen": 1792673550.4701848,
+    "ast_hash": "e7f4b7187d239819a2fd7b7d1cfa0f59",
+    "semantic_hash": ""
+  },
+  "js/district_medicine_requests.js": {
+    "mtime": 1792593056.8833153,
+    "seen": 1792593198.2700982,
+    "ast_hash": "28dbc2c37cb1f53eb8ae66d13ede7c5a",
+    "semantic_hash": ""
+  },
+  "js/district_profile.js": {
+    "mtime": 1792535563.3362226,
+    "seen": 1792590183.112777,
+    "ast_hash": "011cf2906764acf263a826e864d942fb",
+    "semantic_hash": ""
+  },
+  "js/district_reports.js": {
+    "mtime": 1792535563.348055,
+    "seen": 1792590183.112777,
+    "ast_hash": "70b5a35e22f4f9bfc07145912831f339",
+    "semantic_hash": ""
+  },
+  "js/doctors.js": {
+    "mtime": 1792675739.294624,
+    "seen": 1792766000.3682115,
+    "ast_hash": "deba6a47fea48474fd0437224664c3f0",
+    "semantic_hash": ""
+  },
+  "js/medicine_issue.js": {
+    "mtime": 1792675731.5236225,
+    "seen": 1792766000.3682115,
+    "ast_hash": "c565c79cd8e8786686f6088fc65b42ad",
+    "semantic_hash": ""
+  },
+  "js/patients.js": {
+    "mtime": 1792675307.918364,
+    "seen": 1792766000.3682115,
+    "ast_hash": "d2aad49c0cbed6900caafd6051207927",
+    "semantic_hash": ""
+  },
+  "js/profile.js": {
+    "mtime": 1792535563.4065595,
+    "seen": 1792590183.112777,
+    "ast_hash": "81c0cf0330fc1babf312a91ec1451ef4",
+    "semantic_hash": ""
+  },
+  "js/reports.js": {
+    "mtime": 1792535563.4105704,
+    "seen": 1792590183.112777,
+    "ast_hash": "43dbec5c1c06d414f7694e4220d69e91",
+    "semantic_hash": ""
+  },
+  "js/reports_live.js": {
+    "mtime": 1792535563.4149234,
+    "seen": 1792590183.112777,
+    "ast_hash": "a82fd086b4cbacbdb89ad6fbac11e7b4",
+    "semantic_hash": ""
+  },
+  "js/stock_in.js": {
+    "mtime": 1792675725.4064164,
+    "seen": 1792766000.3682115,
+    "ast_hash": "46649a8de07b0e163502bc16788bf6f9",
+    "semantic_hash": ""
+  },
+  "js/system_districts.js": {
+    "mtime": 1792535563.4307814,
+    "seen": 1792590183.112777,
+    "ast_hash": "b4e1849a212cabedbf6d860e3edda399",
+    "semantic_hash": ""
+  },
+  "js/system_medicines_master.js": {
+    "mtime": 1792535563.4420662,
+    "seen": 1792590183.112777,
+    "ast_hash": "2d3da0b46276eb0f5e4dd9b3df400621",
+    "semantic_hash": ""
+  },
+  "js/system_phc_directory.js": {
+    "mtime": 1792535563.4501321,
+    "seen": 1792590183.112777,
+    "ast_hash": "450a64cf971267bf64e634a3ae556cf1",
+    "semantic_hash": ""
+  },
+  "js/system_phc_requests.js": {
+    "mtime": 1792535563.4590394,
+    "seen": 1792590183.112777,
+    "ast_hash": "f82f73801b411b09a04f6a313e89eb9a",
+    "semantic_hash": ""
+  },
+  "js/system_reports.js": {
+    "mtime": 1792535563.466481,
+    "seen": 1792590183.112777,
+    "ast_hash": "1bb7f504a973da045684759ac28a8559",
+    "semantic_hash": ""
+  },
+  "js/theme.js": {
+    "mtime": 1792535563.474467,
+    "seen": 1792590183.112777,
+    "ast_hash": "5c7d4beff246b8f7e92efba1a924b041",
+    "semantic_hash": ""
+  },
+  "login.php": {
+    "mtime": 1792535562.4163167,
+    "seen": 1792590183.112777,
+    "ast_hash": "474cb7ef2c0f4c16d26464dbf46f9231",
+    "semantic_hash": ""
+  },
+  "system_admin/dashboard.php": {
+    "mtime": 1792535563.6210318,
+    "seen": 1792590183.112777,
+    "ast_hash": "8f32544810d805c541c63cfa4375f0d3",
+    "semantic_hash": ""
+  },
+  "system_admin/districts.php": {
+    "mtime": 1792535563.6404734,
+    "seen": 1792590183.112777,
+    "ast_hash": "4a30c89057f2aba8d1095b65f9b8a50c",
+    "semantic_hash": ""
+  },
+  "system_admin/get_report_data.php": {
+    "mtime": 1792535563.651315,
+    "seen": 1792590183.112777,
+    "ast_hash": "7a31eb2125b4b26a03ad11c925e179b2",
+    "semantic_hash": ""
+  },
+  "system_admin/medicines_master.php": {
+    "mtime": 1792535563.6622198,
+    "seen": 1792590183.112777,
+    "ast_hash": "d6f8958dc3a93dc19e3ea60c27dd052d",
+    "semantic_hash": ""
+  },
+  "system_admin/phc_directory.php": {
+    "mtime": 1792535563.6684053,
+    "seen": 1792590183.112777,
+    "ast_hash": "896be9151854ce053419d944688d7dbe",
+    "semantic_hash": ""
+  },
+  "system_admin/phc_requests.php": {
+    "mtime": 1792535563.6993496,
+    "seen": 1792590183.112777,
+    "ast_hash": "8ae330c6d01ed53e65e3a987b0e4cc02",
+    "semantic_hash": ""
+  },
+  "system_admin/profile.php": {
+    "mtime": 1792535563.7134037,
+    "seen": 1792590183.112777,
+    "ast_hash": "fe84646ef4c92dcde06507f0b0374592",
+    "semantic_hash": ""
+  },
+  "system_admin/reports.php": {
+    "mtime": 1792535563.725192,
+    "seen": 1792590183.112777,
+    "ast_hash": "dd2df7541cd77e98a293b53de07dabac",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1792535562.3838224,
+    "seen": 1792590183.112777,
+    "ast_hash": "907dbb9016b389a3d69db3d8af1c3cf5",
+    "semantic_hash": ""
+  },
+  "uploads/phc_proposals/proposal_1788361165_4316.pdf": {
+    "mtime": 1792535563.754376,
+    "seen": 1792590183.112777,
+    "ast_hash": "94225a98d8d0a46aca303acb453f321f",
+    "semantic_hash": ""
+  },
+  "uploads/phc_proposals/proposal_1791639386_4232.pdf": {
+    "mtime": 1792535563.7805078,
+    "seen": 1792590183.112777,
+    "ast_hash": "9d37ab6d2d05e417bd2bba0fc59f66aa",
+    "semantic_hash": ""
+  },
+  "images/Gemini_Generated_Image_luy2bmluy2bmluy2.png": {
+    "mtime": 1792535563.2464948,
+    "seen": 1792590183.112777,
+    "ast_hash": "8c287cf1036b53dd98fb501da9acd8bc",
+    "semantic_hash": ""
+  },
+  "medical_stock_tracker.sql": {
+    "mtime": 1792594570.2766275,
+    "seen": 1792594589.7797985,
+    "ast_hash": "d3564dd56f5cbc6566add43ae211535b",
+    "semantic_hash": ""
+  },
+  "Testing/test.php": {
+    "mtime": 1792593537.953618,
+    "seen": 1792673939.9471352,
+    "ast_hash": "ba6a2ca29cbe245378983c7e582082d4",
+    "semantic_hash": ""
+  },
+  "Testing/TEST_CASES.md": {
+    "mtime": 1792767406.2595086,
+    "seen": 1792774734.5757954,
+    "ast_hash": "54a6ee738fbb083fec029bc96f4f3770",
+    "semantic_hash": ""
+  },
+  "Testing/automated_tests/run_all_tests.py": {
+    "mtime": 1792765881.8857672,
+    "seen": 1792766000.3682115,
+    "ast_hash": "5b7ea18ee3755bcc9121676d524ba88f",
+    "semantic_hash": ""
+  },
+  "Testing/automated_tests/test_config.py": {
+    "mtime": 1792765846.5808456,
+    "seen": 1792766000.3682115,
+    "ast_hash": "735ecba447f7564d7d4b0bc6343811f7",
+    "semantic_hash": ""
+  },
+  "Testing/automated_tests/test_suite1_auth.py": {
+    "mtime": 1792765546.081053,
+    "seen": 1792766000.3682115,
+    "ast_hash": "73162534436f55bdedd7c90951746640",
+    "semantic_hash": ""
+  },
+  "Testing/automated_tests/test_suite2_staff.py": {
+    "mtime": 1792765585.3305585,
+    "seen": 1792766000.3682115,
+    "ast_hash": "4e06d79eaf0256fbb0fa2a605273add7",
+    "semantic_hash": ""
+  },
+  "Testing/automated_tests/test_suite3_district.py": {
+    "mtime": 1792765610.147072,
+    "seen": 1792766000.3682115,
+    "ast_hash": "73403841888883ca8414767cc7b69293",
+    "semantic_hash": ""
+  },
+  "Testing/automated_tests/test_suite4_5_system_db.py": {
+    "mtime": 1792765633.5597785,
+    "seen": 1792766000.3682115,
+    "ast_hash": "26da3c23de488b7fc8d90df38a0d7776",
+    "semantic_hash": ""
+  },
+  "Report/generate_report.py": {
+    "mtime": 1792854164.4604478,
+    "seen": 1792854239.2747135,
+    "ast_hash": "1e777b09daa304eecee14d277e06ee3e",
+    "semantic_hash": ""
+  },
+  "Report/images/college_logo.jpg": {
+    "mtime": 1792774415.6502836,
+    "seen": 1792774734.5757954,
+    "ast_hash": "4e162f2e9a78818e40bf6d9976852547",
+    "semantic_hash": ""
+  },
+  "Report/images/dte_gujarat_logo.jpg": {
+    "mtime": 1792774415.6451857,
+    "seen": 1792774734.5757954,
+    "ast_hash": "984db0ea99a1f5551acfab04bfdf374f",
+    "semantic_hash": ""
+  },
+  "Testing/extracted_images/page_4_1__Image31.jpg": {
+    "mtime": 1792774239.384045,
+    "seen": 1792774734.5757954,
+    "ast_hash": "984db0ea99a1f5551acfab04bfdf374f",
+    "semantic_hash": ""
+  },
+  "Testing/extracted_images/page_4_2__Image32.jpg": {
+    "mtime": 1792774239.4069998,
+    "seen": 1792774734.5757954,
+    "ast_hash": "4e162f2e9a78818e40bf6d9976852547",
+    "semantic_hash": ""
+  },
+  "Testing/extracted_images/page_5_3__Image32.jpg": {
+    "mtime": 1792774239.4254646,
+    "seen": 1792774734.5757954,
+    "ast_hash": "4e162f2e9a78818e40bf6d9976852547",
+    "semantic_hash": ""
+  },
+  "Testing/extracted_images/page_5_4__Image31.jpg": {
+    "mtime": 1792774239.426477,
+    "seen": 1792774734.5757954,
+    "ast_hash": "984db0ea99a1f5551acfab04bfdf374f",
+    "semantic_hash": ""
+  },
+  "Testing/extracted_images/page_6_5__Image31.jpg": {
+    "mtime": 1792774239.4337797,
+    "seen": 1792774734.5757954,
+    "ast_hash": "984db0ea99a1f5551acfab04bfdf374f",
+    "semantic_hash": ""
+  },
+  "Testing/extracted_images/page_6_6__Image32.jpg": {
+    "mtime": 1792774239.4424932,
+    "seen": 1792774734.5757954,
+    "ast_hash": "4e162f2e9a78818e40bf6d9976852547",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_level0_1.jpg": {
+    "mtime": 1792849144.5762746,
+    "seen": 1792849658.8468864,
+    "ast_hash": "50a4636b6efa753f339ff1a3d3a87aff",
+    "semantic_hash": ""
+  },
+  "Report/images/er_diagram.jpg": {
+    "mtime": 1792849144.5739627,
+    "seen": 1792849658.8468864,
+    "ast_hash": "9ffa23df489fa155db6f68be464820cf",
+    "semantic_hash": ""
+  },
+  "Report/images/flowchart.jpg": {
+    "mtime": 1792849144.556194,
+    "seen": 1792849658.8468864,
+    "ast_hash": "4187ad23da743d383bb9c08fec90f399",
+    "semantic_hash": ""
+  },
+  "Report/images/login_workflow.jpg": {
+    "mtime": 1792849144.5785058,
+    "seen": 1792849658.8468864,
+    "ast_hash": "0e14454d9e0564bf3ae6858103855a96",
+    "semantic_hash": ""
+  },
+  "Report/images/screenshot_district_dashboard.jpg": {
+    "mtime": 1792849144.5822432,
+    "seen": 1792849658.8468864,
+    "ast_hash": "a6ac233adf22f3be5d367f0fda010732",
+    "semantic_hash": ""
+  },
+  "Report/images/screenshot_district_requests.jpg": {
+    "mtime": 1792849144.5904274,
+    "seen": 1792849658.8468864,
+    "ast_hash": "97d47645f2dab84a1692284eda1ddcd5",
+    "semantic_hash": ""
+  },
+  "Report/images/screenshot_medicine_issue.jpg": {
+    "mtime": 1792849144.5840335,
+    "seen": 1792849658.8468864,
+    "ast_hash": "4cf111252161cd4531eeabdbaf807220",
+    "semantic_hash": ""
+  },
+  "Report/images/screenshot_staff_dashboard.jpg": {
+    "mtime": 1792849144.5801158,
+    "seen": 1792849658.8468864,
+    "ast_hash": "46ee609aae3ddc0a8394bad647ffd575",
+    "semantic_hash": ""
+  },
+  "Report/images/screenshot_stock_in.jpg": {
+    "mtime": 1792849144.5856254,
+    "seen": 1792849658.8468864,
+    "ast_hash": "31c80097b242a509738e1a5b453b4acb",
+    "semantic_hash": ""
+  },
+  "Report/images/screenshot_sysadmin_proposals.jpg": {
+    "mtime": 1792849144.5872307,
+    "seen": 1792849658.8468864,
+    "ast_hash": "e72115e50abc2185d2665d0a10f16cbc",
+    "semantic_hash": ""
+  },
+  "Report/images/use_case_diagram.jpg": {
+    "mtime": 1792849144.5713162,
+    "seen": 1792849658.8468864,
+    "ast_hash": "3868f7f380b0ef21eb03dfc00168ae60",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_10__Image-7888911063.png": {
+    "mtime": 1792849056.8846774,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_11__Image-979344929.png": {
+    "mtime": 1792849056.9674604,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_11__X6.jpg": {
+    "mtime": 1792849056.9667003,
+    "seen": 1792849658.8468864,
+    "ast_hash": "9ffa23df489fa155db6f68be464820cf",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_12__Image-2708199956.png": {
+    "mtime": 1792849056.99417,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_12__X6.jpg": {
+    "mtime": 1792849056.990539,
+    "seen": 1792849658.8468864,
+    "ast_hash": "0d54b61d883da3b0aa8857760b8c7a9d",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_12__X8.jpg": {
+    "mtime": 1792849056.9919837,
+    "seen": 1792849658.8468864,
+    "ast_hash": "86eaf30ac450ad9d14f6502424e034af",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_12__X9.jpg": {
+    "mtime": 1792849056.993105,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2551d69845676bc983c946fdb5c30480",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_13__Image-6703682664.png": {
+    "mtime": 1792849057.037696,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_13__X8.jpg": {
+    "mtime": 1792849057.036089,
+    "seen": 1792849658.8468864,
+    "ast_hash": "50a4636b6efa753f339ff1a3d3a87aff",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_14__Image-735569487.png": {
+    "mtime": 1792849057.094004,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_14__X10.jpg": {
+    "mtime": 1792849057.0923052,
+    "seen": 1792849658.8468864,
+    "ast_hash": "a1bd6de1ae690fc3438f6ccaf7b69a6f",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_14__X6.jpg": {
+    "mtime": 1792849057.0631902,
+    "seen": 1792849658.8468864,
+    "ast_hash": "8443f067d5a483a92139956b088d38e1",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_14__X8.jpg": {
+    "mtime": 1792849057.0875142,
+    "seen": 1792849658.8468864,
+    "ast_hash": "8c234015a0951145819024e617ea72c5",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_14__X9.jpg": {
+    "mtime": 1792849057.0910275,
+    "seen": 1792849658.8468864,
+    "ast_hash": "b1e465f39a57189db9c97bee5c09a4e1",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_15__Image-8784015711.png": {
+    "mtime": 1792849057.1231196,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_15__X10.jpg": {
+    "mtime": 1792849057.1213582,
+    "seen": 1792849658.8468864,
+    "ast_hash": "599053137a6b751b2441ec75f0323150",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_15__X6.jpg": {
+    "mtime": 1792849057.1180532,
+    "seen": 1792849658.8468864,
+    "ast_hash": "7b5b60e2d2cfce18ec1d9bb863a7674f",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_15__X8.jpg": {
+    "mtime": 1792849057.1191325,
+    "seen": 1792849658.8468864,
+    "ast_hash": "6e5c6b4bc16156fa133cd5b0b0bc27c1",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_15__X9.jpg": {
+    "mtime": 1792849057.1202257,
+    "seen": 1792849658.8468864,
+    "ast_hash": "7b5b60e2d2cfce18ec1d9bb863a7674f",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_16__Image-9668333493.png": {
+    "mtime": 1792849057.1965516,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_16__X6.png": {
+    "mtime": 1792849057.1954944,
+    "seen": 1792849658.8468864,
+    "ast_hash": "0e31dacaa281bde909afa6f9b7324757",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_17__Image-250812044.png": {
+    "mtime": 1792849057.2527366,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_17__X6.jpg": {
+    "mtime": 1792849057.225604,
+    "seen": 1792849658.8468864,
+    "ast_hash": "0e14454d9e0564bf3ae6858103855a96",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_18__Image-1275322832.png": {
+    "mtime": 1792849057.2907128,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_18__X9.jpg": {
+    "mtime": 1792849057.2889705,
+    "seen": 1792849658.8468864,
+    "ast_hash": "0100971d3fc63fb199cb139a417c5dfc",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_19__Image-7720966295.png": {
+    "mtime": 1792849057.3187656,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_1__Image-7098480789.png": {
+    "mtime": 1792849056.4801927,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_1__X4.png": {
+    "mtime": 1792849056.4520137,
+    "seen": 1792849658.8468864,
+    "ast_hash": "d72345587812018bdd10f6b3ab57ea3b",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_20__Image-4525072762.png": {
+    "mtime": 1792849057.4230764,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_20__X4.png": {
+    "mtime": 1792849057.4190247,
+    "seen": 1792849658.8468864,
+    "ast_hash": "1b95a95cfa62479e916aec860b832a47",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_21__Image-5563853605.png": {
+    "mtime": 1792849057.5543458,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_21__X11.jpg": {
+    "mtime": 1792849057.5248578,
+    "seen": 1792849658.8468864,
+    "ast_hash": "46ee609aae3ddc0a8394bad647ffd575",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_21__X12.jpg": {
+    "mtime": 1792849057.550671,
+    "seen": 1792849658.8468864,
+    "ast_hash": "a6ac233adf22f3be5d367f0fda010732",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_21__X4.png": {
+    "mtime": 1792849057.522774,
+    "seen": 1792849658.8468864,
+    "ast_hash": "0eca06cae8172ff74045cf719009fe9f",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_22__Image-4869070959.png": {
+    "mtime": 1792849057.5762558,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_23__Image-7959582482.png": {
+    "mtime": 1792849057.639079,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_23__X7.jpg": {
+    "mtime": 1792849057.6075983,
+    "seen": 1792849658.8468864,
+    "ast_hash": "4cf111252161cd4531eeabdbaf807220",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_23__X9.jpg": {
+    "mtime": 1792849057.6358202,
+    "seen": 1792849658.8468864,
+    "ast_hash": "31c80097b242a509738e1a5b453b4acb",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_24__Image-2163799337.png": {
+    "mtime": 1792849057.7335405,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_24__X4.png": {
+    "mtime": 1792849057.7311442,
+    "seen": 1792849658.8468864,
+    "ast_hash": "fac3354250f5fbfbcff0001648811f1d",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_25__Image-4824990222.png": {
+    "mtime": 1792849057.8593755,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_25__X19.jpg": {
+    "mtime": 1792849057.8571105,
+    "seen": 1792849658.8468864,
+    "ast_hash": "e72115e50abc2185d2665d0a10f16cbc",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_25__X20.jpg": {
+    "mtime": 1792849057.8582458,
+    "seen": 1792849658.8468864,
+    "ast_hash": "97d47645f2dab84a1692284eda1ddcd5",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_25__X4.png": {
+    "mtime": 1792849057.8554757,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2bb80e7065b64601bf3aef3661f6b0b2",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_26__Image-5845047960.png": {
+    "mtime": 1792849057.9220915,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_27__Image-7592840450.png": {
+    "mtime": 1792849057.94706,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_28__Image-578830786.png": {
+    "mtime": 1792849057.980127,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_28__X4.jpg": {
+    "mtime": 1792849057.9776392,
+    "seen": 1792849658.8468864,
+    "ast_hash": "059ebe6db20ba1018eb49aaca4900d4f",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_29__Image-6611578703.png": {
+    "mtime": 1792849058.113513,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_29__X4.png": {
+    "mtime": 1792849058.110658,
+    "seen": 1792849658.8468864,
+    "ast_hash": "c93b82c9a983536b584899a37ba9390b",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_2__Image-9742682568.png": {
+    "mtime": 1792849056.4983492,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_3__Image-2000805986.png": {
+    "mtime": 1792849056.5157473,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_4__Image-9750469207.png": {
+    "mtime": 1792849056.595613,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_4__X5.jpg": {
+    "mtime": 1792849056.5926354,
+    "seen": 1792849658.8468864,
+    "ast_hash": "637aeba713bee2e09b020d41419c1a0e",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_5__Image-7572533686.png": {
+    "mtime": 1792849056.6418219,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_5__X11.jpg": {
+    "mtime": 1792849056.6402524,
+    "seen": 1792849658.8468864,
+    "ast_hash": "3868f7f380b0ef21eb03dfc00168ae60",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_6__Image-8450180107.png": {
+    "mtime": 1792849056.7592149,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_6__X4.png": {
+    "mtime": 1792849056.7322493,
+    "seen": 1792849658.8468864,
+    "ast_hash": "98c64cc19a40dd54a1464f1743ecd9a1",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_7__Image-8659871878.png": {
+    "mtime": 1792849056.785642,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_7__X6.jpg": {
+    "mtime": 1792849056.784422,
+    "seen": 1792849658.8468864,
+    "ast_hash": "4187ad23da743d383bb9c08fec90f399",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_8__Image-5824662338.png": {
+    "mtime": 1792849056.8424776,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_8__X6.jpg": {
+    "mtime": 1792849056.8197074,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2c7bc6e5f3932a68f80e7fd27615dd96",
+    "semantic_hash": ""
+  },
+  "Report/presentation_images/page_9__Image-1848524175.png": {
+    "mtime": 1792849056.8696668,
+    "seen": 1792849658.8468864,
+    "ast_hash": "2e1ce8b77f312b714a85cfa430ed8182",
+    "semantic_hash": ""
+  },
+  ".agents/rules/ponytail.md": {
+    "mtime": 1792850687.1888747,
+    "seen": 1792850718.2552419,
+    "ast_hash": "802c77c1181d9671bef6e452c7ab2c24",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_mod_1_0_auth.png": {
+    "mtime": 1792853810.824067,
+    "seen": 1792854239.2747135,
+    "ast_hash": "aa25044cf43086a1e82cf649120e2cf2",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_mod_2_0_phc_staff.png": {
+    "mtime": 1792853810.9411147,
+    "seen": 1792854239.2747135,
+    "ast_hash": "7879ef8d681e5f8bc83a000765e7942d",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_mod_3_0_inventory.png": {
+    "mtime": 1792853811.0700512,
+    "seen": 1792854239.2747135,
+    "ast_hash": "261f81c160ce54fa1e20910f5a813257",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_mod_4_0_patient_visit.png": {
+    "mtime": 1792853811.1925168,
+    "seen": 1792854239.2747135,
+    "ast_hash": "18305e13e34b434e8277b8cb4d3f184a",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_mod_5_0_medicine_issue.png": {
+    "mtime": 1792853811.2900279,
+    "seen": 1792854239.2747135,
+    "ast_hash": "c5c335608d0a4769eacb52aa043f3439",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_mod_6_0_medicine_requests.png": {
+    "mtime": 1792853811.3757777,
+    "seen": 1792854239.2747135,
+    "ast_hash": "276e6392ae5176b8a1bb2ee28874063a",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_mod_7_0_phc_creation.png": {
+    "mtime": 1792853811.4879932,
+    "seen": 1792854239.2747135,
+    "ast_hash": "40ddf86bf773b8522d068689356efaaf",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_mod_8_0_reports.png": {
+    "mtime": 1792853811.5965166,
+    "seen": 1792854239.2747135,
+    "ast_hash": "81cd4514261e32f8cb4fc8dd8a237c23",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_modules/slide_14_full.jpg": {
+    "mtime": 1792853688.487038,
+    "seen": 1792854239.2747135,
+    "ast_hash": "c6e773f99e5a6656091737d3464bc326",
+    "semantic_hash": ""
+  },
+  "Report/images/dfd_modules/slide_15_full.jpg": {
+    "mtime": 1792853688.9415889,
+    "seen": 1792854239.2747135,
+    "ast_hash": "915f4bc058f214f5ea583450e267e585",
+    "semantic_hash": ""
+  }
+}

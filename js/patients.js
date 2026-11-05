@@ -4,7 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeModalBtn = document.getElementById("closeModalBtn");
     const registerModal = document.getElementById("registerModal");
     const registerForm = document.getElementById("registerForm");
-    const successBanner = document.getElementById("successBanner");
 
     // Drawer Elements
     const historyDrawer = document.getElementById("historyDrawer");
@@ -13,41 +12,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const drawerPatientName = document.getElementById("drawerPatientName");
     const drawerPatientId = document.getElementById("drawerPatientId");
 
-    // 1. Open/Close Register Modal
-    if (openModalBtn && closeModalBtn && registerModal) {
-        openModalBtn.addEventListener("click", () => {
+    // Helper functions for Modal
+    function openModal() {
+        if (registerModal) {
+            registerModal.style.display = "flex";
             registerModal.classList.add("active");
-        });
+        }
+    }
 
-        closeModalBtn.addEventListener("click", () => {
+    function closeModal() {
+        if (registerModal) {
+            registerModal.style.display = "none";
             registerModal.classList.remove("active");
-        });
+        }
+    }
 
+    // 1. Open/Close Register Modal
+    if (openModalBtn) {
+        openModalBtn.addEventListener("click", openModal);
+    }
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", closeModal);
+    }
+
+    if (registerModal) {
         window.addEventListener("click", (e) => {
             if (e.target === registerModal) {
-                registerModal.classList.remove("active");
+                closeModal();
             }
         });
     }
 
-    // 2. Handle Mock Registration Submission
-    if (registerForm) {
-        registerForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            registerModal.classList.remove("active");
-            registerForm.reset();
-
-            // Show success banner
-            if (successBanner) {
-                successBanner.style.display = "flex";
-                setTimeout(() => {
-                    successBanner.style.display = "none";
-                }, 4000);
-            }
-        });
-    }
-
-    // 3. Open/Close Patient History Drawer
+    // 2. Open/Close Patient History Drawer
     patientNameLinks.forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
@@ -58,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (drawerPatientId) drawerPatientId.textContent = "Patient ID: " + id;
 
             if (historyDrawer) {
+                historyDrawer.style.right = "0";
                 historyDrawer.classList.add("active");
             }
         });
@@ -65,11 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (closeDrawerBtn && historyDrawer) {
         closeDrawerBtn.addEventListener("click", () => {
+            historyDrawer.style.right = "-400px";
             historyDrawer.classList.remove("active");
         });
 
         window.addEventListener("click", (e) => {
             if (e.target === historyDrawer) {
+                historyDrawer.style.right = "-400px";
                 historyDrawer.classList.remove("active");
             }
         });

@@ -133,6 +133,10 @@ $top_medicines = $stmt_top->get_result();
                     <i class="fas fa-print"></i> Print Report / Save PDF
                 </button>
                 <button class="theme-toggle-btn" id="themeToggleBtn" title="Switch Theme"><i class="fas fa-sun"></i></button>
+                <div class="date-time-display">
+                    <i class="far fa-calendar-alt"></i>
+                    <span><?php echo date("d M Y, h:i A"); ?></span>
+                </div>
             </div>
         </header>
 

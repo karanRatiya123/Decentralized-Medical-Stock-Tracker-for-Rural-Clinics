@@ -51,19 +51,4 @@ document.addEventListener("DOMContentLoaded", () => {
     if (initialRow) {
         attachRemoveEvent(initialRow);
     }
-
-    // 3. Handle Form Submission Preview
-    if (dispenseForm) {
-        dispenseForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            dispenseForm.reset();
-
-            if (successBanner) {
-                successBanner.style.display = "flex";
-                setTimeout(() => {
-                    successBanner.style.display = "none";
-                }, 4000);
-            }
-        });
-    }
 });

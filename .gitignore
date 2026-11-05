@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Agent and editor artifacts
+.agents/
+.cursor/
+graphify-out/cache/
+graphify-out/*.pending.json
+
+# Operating System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Secret database credentials
+config/aiven_credentials.php
+
